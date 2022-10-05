@@ -1,4 +1,4 @@
-package DataTypes;
+package DataInternals;
 
 public abstract class Data {
     private final Object TAG;

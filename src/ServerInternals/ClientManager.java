@@ -1,8 +1,8 @@
-package Server;
+package ServerInternals;
 
-import DataTypes.Answer;
-import DataTypes.Data;
-import DataTypes.DataHandler;
+import DataInternals.Answer;
+import DataInternals.Data;
+import DataInternals.DataHandler;
 
 import java.net.InetSocketAddress;
 import java.net.Socket;

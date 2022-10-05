@@ -1,9 +1,5 @@
-import DataTypes.Data;
-import DataTypes.Answer;
-import DataTypes.DataHandler;
-import Server.Server;
-
-import java.util.UUID;
+import DataInternals.DataHandler;
+import ServerInternals.Server;
 
 public final class RunnableServer {
     public static void main(String[] args) {

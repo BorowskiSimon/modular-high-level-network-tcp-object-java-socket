@@ -1,9 +1,9 @@
-package Client;
+package ClientInternals;
 
-import DataTypes.Answer;
-import DataTypes.Data;
-import DataTypes.DataHandler;
-import DataTypes.Request;
+import DataInternals.Answer;
+import DataInternals.Data;
+import DataInternals.DataHandler;
+import DataInternals.Request;
 import Utility.Helper;
 
 import java.io.ObjectInputStream;

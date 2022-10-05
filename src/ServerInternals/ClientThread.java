@@ -1,9 +1,9 @@
-package Server;
+package ServerInternals;
 
-import DataTypes.Answer;
-import DataTypes.Data;
-import DataTypes.DataHandler;
-import DataTypes.Request;
+import DataInternals.Answer;
+import DataInternals.Data;
+import DataInternals.DataHandler;
+import DataInternals.Request;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;

@@ -1,4 +1,4 @@
-package DataTypes;
+package DataInternals;
 
 import java.io.Serializable;
 

@@ -1,7 +1,6 @@
-import Client.Client;
-import DataTypes.Data;
-import DataTypes.DataHandler;
-import DataTypes.Request;
+import ClientInternals.Client;
+import DataInternals.DataHandler;
+import DataInternals.Request;
 
 import java.util.Scanner;
 
