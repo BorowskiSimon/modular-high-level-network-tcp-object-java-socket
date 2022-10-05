@@ -15,10 +15,12 @@ public final class ClientManager {
     private final HashMap<UUID, ClientThread> clientThreadHashMap = new HashMap<>();
     private boolean DEBUG = false;
     public final DataHandler dataHandler;
+    private final int max;
 
-    public ClientManager(boolean DEBUG, boolean OFFLINE, DataHandler dataHandler) {
+    public ClientManager(boolean DEBUG, boolean OFFLINE, int max, DataHandler dataHandler) {
         setDEBUG(DEBUG);
         this.OFFLINE = OFFLINE;
+        this.max = max;
 
         this.dataHandler = dataHandler;
         initDataHandler();
@@ -38,7 +40,7 @@ public final class ClientManager {
                     clientThreadHashMap.get(uuid).close();
                     clientThreadHashMap.remove(uuid);
                     print(uuid, "disconnected");
-                    print("connected clients: " + getConnectionAmount() + " / " + clientThreadHashMap.size());
+                    printStatus();
                 }
             }
         });
@@ -102,7 +104,7 @@ public final class ClientManager {
             clientThreadHashMap.put(id, clientThread);
 
             print(id, (reconnected ? "re" : "") + "connected");
-            print("connected clients: " + getConnectionAmount() + " / " + clientThreadHashMap.size());
+            printStatus();
 
             clientThreadHashMap.get(id).start();
         }
@@ -145,6 +147,10 @@ public final class ClientManager {
     public void removeClient(UUID id) {
         closeClient(id);
         clientThreadHashMap.remove(id);
+    }
+
+    private void printStatus() {
+        print("connected clients: " + getConnectionAmount() + " / " + max);
     }
 
 

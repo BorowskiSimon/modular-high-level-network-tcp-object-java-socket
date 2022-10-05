@@ -19,7 +19,7 @@ public final class RunnableClient {
         });
          */
 
-        Client client = new Client(true, "**Deine** Mum", "localhost", 25565, false);
+        Client client = new Client(false, "**Deine** Mum", "localhost", 25565, false);
         client.setDataHandler(dataHandler);
         client.start();
 
@@ -32,7 +32,7 @@ public final class RunnableClient {
                 break;
             }
             client.send(new Request("Chat", client.name + ": " + input));
-        } while (true);
+        } while (client.isOn());
 
         client.close();
     }

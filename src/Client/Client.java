@@ -200,6 +200,10 @@ public final class Client {
         print("stopped");
     }
 
+    public boolean isOn() {
+        return on;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -213,7 +217,7 @@ public final class Client {
         }
     }
 
-    private void print(String toPrint){
+    private void print(String toPrint) {
         System.out.println("Client[" + id + "] >> " + toPrint + " <<");
     }
 
@@ -227,9 +231,9 @@ public final class Client {
         if (condition) debug(toPrint);
     }
 
-    private void debug(String toPrint, Exception e){
+    private void debug(String toPrint, Exception e) {
         debug(toPrint);
-        if(DEBUG) {
+        if (DEBUG) {
             e.printStackTrace();
         }
     }

@@ -45,7 +45,7 @@ public final class Server {
     }
 
     public void setDataHandler(DataHandler dataHandler) {
-        clientManager = new ClientManager(DEBUG, OFFLINE, dataHandler);
+        clientManager = new ClientManager(DEBUG, OFFLINE, max, dataHandler);
     }
 
     private void setIPv6() {
