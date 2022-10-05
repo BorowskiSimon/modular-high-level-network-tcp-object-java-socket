@@ -27,12 +27,6 @@ public final class ClientManager {
     }
 
     private void initDataHandler() {
-        dataHandler.addDataType(new Data("Chat") {
-            @Override
-            public void handle(Object input) {
-                broadcast(new Answer("Chat", input));
-            }
-        });
         dataHandler.addDataType(new Data("Disconnect") {
             @Override
             public void handle(Object input) {

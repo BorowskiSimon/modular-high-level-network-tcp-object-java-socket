@@ -93,12 +93,6 @@ public final class Client {
                 send(new Request("Connect", name));
             }
         });
-        dataHandler.addDataType(new Data("Chat") {
-            @Override
-            public void handle(Object input) {
-                System.out.println(input);
-            }
-        });
         //TODO
     }
 

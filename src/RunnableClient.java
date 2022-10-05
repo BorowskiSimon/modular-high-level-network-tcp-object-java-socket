@@ -1,4 +1,5 @@
 import ClientInternals.Client;
+import DataInternals.Data;
 import DataInternals.DataHandler;
 import DataInternals.Request;
 
@@ -9,6 +10,12 @@ public final class RunnableClient {
         System.out.println("\n\nStart Runnable Client");
 
         DataHandler dataHandler = new DataHandler(false);
+        dataHandler.addDataType(new Data("Chat") {
+            @Override
+            public void handle(Object input) {
+                System.out.println(input);
+            }
+        });
         /*
         dataHandler.addDataType(new Data(//TODO) {
             @Override
