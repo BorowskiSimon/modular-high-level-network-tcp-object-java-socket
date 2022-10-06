@@ -1,7 +1,6 @@
 package ServerInternals;
 
 import DataInternals.Answer;
-import DataInternals.Data;
 import DataInternals.DataHandler;
 import Utility.Helper;
 

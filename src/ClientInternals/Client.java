@@ -24,7 +24,7 @@ public final class Client {
     private boolean DEBUG = false;
     private volatile boolean on = false;
     private final boolean IPv6;
-    private volatile long ping, timestamp;
+    private volatile long ping = 0, timestamp;
     private DataHandler dataHandler;
     private volatile boolean handling = false;
     private volatile Answer answer;
@@ -45,6 +45,8 @@ public final class Client {
     });
 
     public Client(boolean DEBUG, String name, String serverIP, int port, boolean IPv6) {
+        //TODO timeout für z.b. ping nach 3 sekunden (evtl je nach Data)
+
         setDEBUG(DEBUG);
 
         changeName(name);
@@ -82,6 +84,7 @@ public final class Client {
             public void handle(Object input) {
                 ping = System.currentTimeMillis() - timestamp;
                 debug("ping: " + ping + "ms");
+                System.out.println("ping: " + ping + "ms");
             }
         });
         dataHandler.addDataType(new Data("Connect") {
@@ -219,10 +222,6 @@ public final class Client {
     public void ping() {
         timestamp = System.currentTimeMillis();
         send(new Request("Ping", null));
-    }
-
-    public long getPing() {
-        return ping;
     }
 
 

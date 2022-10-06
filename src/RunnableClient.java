@@ -3,6 +3,7 @@ import DataInternals.Data;
 import DataInternals.DataHandler;
 import DataInternals.Request;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public final class RunnableClient {
@@ -53,7 +54,7 @@ public final class RunnableClient {
         client.start();
 
 
-        Scanner scanner = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in, "Cp850");
         String input;
         do {
             input = scanner.nextLine();
@@ -61,7 +62,6 @@ public final class RunnableClient {
                 break;
             } else if (input.equals("ping")) {
                 client.ping();
-                System.out.println(client.getPing());
             } else {
                 client.send(new Request("Chat", client.name + ": " + input));
             }

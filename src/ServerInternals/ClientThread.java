@@ -15,12 +15,11 @@ public final class ClientThread {
     private boolean DEBUG;
     private final Socket socket;
     public final UUID id;
-    public final int RETRY_COUNTER = 5;
     public volatile Request request;
 
     public final DataHandler dataHandler;
 
-    private volatile boolean connected = false, handling = false;
+    private volatile boolean connected, handling = false;
 
     public volatile String name;
 
