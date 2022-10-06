@@ -21,11 +21,25 @@ public final class RunnableClient {
             @Override
             public void handle(Object input) {
                 //TODO
+                // example:
+                // System.out.println("Test Print: " + input);
             }
         });
          */
 
         Client client = new Client(false, "**Deine** Mum", "localhost", 25565, false);
+
+        /*
+        dataHandler.addDataType(new Data(//TODO) {
+            @Override
+            public void handle(Object input) {
+                //TODO
+                // example:
+                // client.close();
+            }
+        });
+         */
+
         client.setDataHandler(dataHandler);
         client.start();
 

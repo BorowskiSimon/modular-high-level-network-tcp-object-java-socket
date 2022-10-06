@@ -31,11 +31,18 @@ public final class ClientManager {
             @Override
             public void handle(Object input) {
                 if(input instanceof UUID uuid) {
+                    broadcast(new Answer("Chat", clientThreadHashMap.get(uuid).name + " disconnected."));
                     clientThreadHashMap.get(uuid).close();
                     clientThreadHashMap.remove(uuid);
                     print(uuid, "disconnected");
                     printStatus();
                 }
+            }
+        });
+        dataHandler.addDataType(new Data("Chat") {
+            @Override
+            public void handle(Object input) {
+                broadcast(new Answer(TAG, input));
             }
         });
         //TODO

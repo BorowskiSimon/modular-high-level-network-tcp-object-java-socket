@@ -69,10 +69,13 @@ public final class ClientThread {
         dataHandler.addDataType(new Data("Ping") {
             @Override
             public void handle(Object input) {
+                if(input == null){
+                    input = 0;
+                }
                 long currentTime = System.currentTimeMillis();
                 ping = (long) input - currentTime;
                 debug("ping: " + ping + "ms");
-                send(new Answer("Ping", currentTime));
+                send(new Answer(TAG, currentTime));
             }
         });
         dataHandler.addDataType(new Data("ChangeName") {

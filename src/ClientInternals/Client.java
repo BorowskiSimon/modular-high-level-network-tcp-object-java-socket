@@ -74,23 +74,33 @@ public final class Client {
         dataHandler.addDataType(new Data("Ping") {
             @Override
             public void handle(Object input) {
+                if(input == null){
+                    input = 0;
+                }
                 long currentTime = System.currentTimeMillis();
                 ping = (long) input - currentTime;
                 debug("ping: " + ping + "ms");
-                send(new Request("Ping", currentTime));
+                send(new Request(TAG, currentTime));
             }
         });
         dataHandler.addDataType(new Data("Reconnect") {
             @Override
             public void handle(Object input) {
-                send(new Request("Reconnect", id));
+                send(new Request(TAG, id));
             }
         });
         dataHandler.addDataType(new Data("Connect") {
             @Override
             public void handle(Object input) {
                 id = (UUID) input;
-                send(new Request("Connect", name));
+                send(new Request(TAG, name));
+            }
+        });
+        dataHandler.addDataType(new Data("Chat") {
+            @Override
+            public void handle(Object input) {
+                //TODO make javadoc for overwriting ;)
+                System.out.println(input);
             }
         });
         //TODO

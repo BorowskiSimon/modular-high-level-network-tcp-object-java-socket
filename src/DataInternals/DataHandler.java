@@ -2,7 +2,7 @@ package DataInternals;
 
 import java.util.HashMap;
 
-public class DataHandler {
+public final class DataHandler {
     private boolean DEBUG = false;
     private final HashMap<Object, Data> dataTypeHashMap = new HashMap<>();
 
@@ -11,11 +11,11 @@ public class DataHandler {
     }
 
     public void addDataType(Data data) {
-        if (!dataTypeHashMap.containsKey(data.getTAG())) {
-            dataTypeHashMap.put(data.getTAG(), data);
-            debug("'" + data.getTAG() + "' was added");
+        if (!dataTypeHashMap.containsKey(data.TAG)) {
+            dataTypeHashMap.put(data.TAG, data);
+            debug("'" + data.TAG + "' was added");
         } else {
-            debug("'" + data.getTAG() + "' already existed");
+            debug("'" + data.TAG + "' already existed");
         }
     }
 
