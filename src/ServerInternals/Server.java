@@ -77,11 +77,15 @@ public final class Server {
     }
 
     public void start() {
-        if (clientManager != null) {
-            setOn();
-            connectionThread.start();
+        if(socket != null){
+            if (clientManager != null) {
+                setOn();
+                connectionThread.start();
+            } else {
+                debug("client manager still null. maybe data handler missing");
+            }
         } else {
-            debug("client manager still null. maybe data handler missing");
+            debug("socket still null. maybe server not online");
         }
     }
 

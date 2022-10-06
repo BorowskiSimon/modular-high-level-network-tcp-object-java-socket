@@ -24,7 +24,7 @@ public final class Client {
     private boolean DEBUG = false;
     private volatile boolean on = false;
     private final boolean IPv6;
-    private volatile long ping;
+    private volatile long ping, timestamp;
     private DataHandler dataHandler;
     private volatile boolean handling = false;
     private volatile Answer answer;
@@ -71,29 +71,26 @@ public final class Client {
     }
 
     private void initDataHandler() {
+        dataHandler.addDataType(new Data("PingTask") {
+            @Override
+            public void handle(Object input) {
+                send(new Request(TAG, null));
+            }
+        });
         dataHandler.addDataType(new Data("Ping") {
             @Override
             public void handle(Object input) {
-                if(input == null){
-                    input = 0;
-                }
-                long currentTime = System.currentTimeMillis();
-                ping = (long) input - currentTime;
+                ping = System.currentTimeMillis() - timestamp;
                 debug("ping: " + ping + "ms");
-                send(new Request(TAG, currentTime));
-            }
-        });
-        dataHandler.addDataType(new Data("Reconnect") {
-            @Override
-            public void handle(Object input) {
-                send(new Request(TAG, id));
             }
         });
         dataHandler.addDataType(new Data("Connect") {
             @Override
             public void handle(Object input) {
                 id = (UUID) input;
-                send(new Request(TAG, name));
+                Object[] objects = new Object[]{id, name};
+                send(new Request(TAG, objects));
+                debug("connected");
             }
         });
         dataHandler.addDataType(new Data("Chat") {
@@ -181,9 +178,16 @@ public final class Client {
         }
     }
 
+    public void stop() {
+        if (socket != null) {
+            print("active disconnect");
+            send(new Request("Disconnect", id));
+        }
+        close();
+    }
+
     public void close() {
         debug("disconnecting");
-        send(new Request("Disconnect", id));
         on = false;
         try {
             if (in != null) {
@@ -210,6 +214,15 @@ public final class Client {
 
     public UUID getId() {
         return id;
+    }
+
+    public void ping() {
+        timestamp = System.currentTimeMillis();
+        send(new Request("Ping", null));
+    }
+
+    public long getPing() {
+        return ping;
     }
 
 

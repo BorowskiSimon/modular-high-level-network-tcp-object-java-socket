@@ -15,6 +15,7 @@ public final class ClientManager {
     private final HashMap<UUID, ClientThread> clientThreadHashMap = new HashMap<>();
     private boolean DEBUG = false;
     public final DataHandler dataHandler;
+    private volatile ClientThread currentClientThread;
     private final int max;
 
     public ClientManager(boolean DEBUG, boolean OFFLINE, int max, DataHandler dataHandler) {
@@ -30,7 +31,7 @@ public final class ClientManager {
         dataHandler.addDataType(new Data("Disconnect") {
             @Override
             public void handle(Object input) {
-                if(input instanceof UUID uuid) {
+                if (input instanceof UUID uuid) {
                     broadcast(new Answer("Chat", clientThreadHashMap.get(uuid).name + " disconnected."));
                     clientThreadHashMap.get(uuid).close();
                     clientThreadHashMap.remove(uuid);
@@ -43,6 +44,27 @@ public final class ClientManager {
             @Override
             public void handle(Object input) {
                 broadcast(new Answer(TAG, input));
+            }
+        });
+        dataHandler.addDataType(new Data("Connect") {
+            @Override
+            public void handle(Object input) {
+                if (input instanceof Object[] objects) {
+                    if (objects[0] instanceof UUID id) {
+                        String name = (String) objects[1];
+                        boolean reconnected = clientThreadHashMap.containsKey(id);
+                        if (reconnected) {
+                            clientThreadHashMap.get(id).close();
+                            clientThreadHashMap.remove(id);
+                            debug("removed old thread: " + id);
+                        }
+                        currentClientThread.name = name;
+                        clientThreadHashMap.put(id, currentClientThread);
+
+                        broadcast(new Answer("Chat", clientThreadHashMap.get(id).name + (reconnected ? " reconnected. Welcome back!" : " connected. Welcome!")));
+                        printStatus();
+                    }
+                }
             }
         });
         //TODO
@@ -58,7 +80,7 @@ public final class ClientManager {
             }
         });
 
-        debug("connected clients: " + ret + " / " + clientThreadHashMap.size());
+        debug("current clients: " + ret + " / " + clientThreadHashMap.size());
 
         return ret.get();
     }
@@ -80,35 +102,9 @@ public final class ClientManager {
     }
 
     public void creatingClient(Socket client) {
-        UUID id = UUID.randomUUID();
-        ClientThread clientThread = new ClientThread(DEBUG, client, id, dataHandler);
-
-        reconnectionCheckAndConnect(clientThread, id);
-    }
-
-    private void reconnectionCheckAndConnect(ClientThread clientThread, UUID id) {
-        boolean connected = clientThread.connecting();
-        debug(id, "initial connect: " + connected);
-        if (connected) {
-
-            UUID reconnectionID = clientThread.reconnecting();
-            boolean reconnected = reconnectionID != null && clientThreadHashMap.containsKey(reconnectionID);
-
-            if (reconnected) {
-                id = reconnectionID;
-                clientThreadHashMap.get(id).close();
-                clientThreadHashMap.remove(id);
-                debug("removed old thread: " + id);
-            }
-
-            debug("client id: " + id);
-            clientThreadHashMap.put(id, clientThread);
-
-            print(id, (reconnected ? "re" : "") + "connected");
-            printStatus();
-
-            clientThreadHashMap.get(id).start();
-        }
+        currentClientThread = new ClientThread(DEBUG, client, UUID.randomUUID(), dataHandler);
+        currentClientThread.start();
+        currentClientThread.send(new Answer("Connect", currentClientThread.id));
     }
 
     public void send(Answer answer, UUID id) {
@@ -151,6 +147,7 @@ public final class ClientManager {
     }
 
     private void printStatus() {
+        broadcast(new Answer("Chat", "Connected clients: " + getConnectionAmount() + " / " + max));
         print("connected clients: " + getConnectionAmount() + " / " + max);
     }
 

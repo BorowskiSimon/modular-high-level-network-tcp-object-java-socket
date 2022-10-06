@@ -7,6 +7,15 @@ import java.util.Scanner;
 
 public final class RunnableClient {
     public static void main(String[] args) {
+        String ip = "localhost";
+        String name = "Default Mum";
+        if (args.length > 0) {
+            ip = args[0];
+        }
+        if (args.length > 1) {
+            name = args[1];
+        }
+
         System.out.println("\n\nStart Runnable Client");
 
         DataHandler dataHandler = new DataHandler(false);
@@ -27,7 +36,7 @@ public final class RunnableClient {
         });
          */
 
-        Client client = new Client(false, "**Deine** Mum", "localhost", 25565, false);
+        Client client = new Client(false, name, ip, 25565, false);
 
         /*
         dataHandler.addDataType(new Data(//TODO) {
@@ -47,13 +56,18 @@ public final class RunnableClient {
         Scanner scanner = new Scanner(System.in);
         String input;
         do {
-            input = scanner.next();
-            if(input.equals("exit")){
+            input = scanner.nextLine();
+            if (input.equals("exit")) {
                 break;
+            } else if (input.equals("ping")) {
+                client.ping();
+                System.out.println(client.getPing());
+            } else {
+                client.send(new Request("Chat", client.name + ": " + input));
             }
-            client.send(new Request("Chat", client.name + ": " + input));
         } while (client.isOn());
 
-        client.close();
+
+        client.stop();
     }
 }

@@ -20,11 +20,11 @@ public final class ClientThread {
 
     public final DataHandler dataHandler;
 
-    private volatile boolean connected, handling = false;
+    private volatile boolean connected = false, handling = false;
 
     public volatile String name;
 
-    public volatile long ping;
+    public volatile long ping, timestamp;
 
     private ObjectOutputStream out;
     private ObjectInputStream in;
@@ -56,26 +56,30 @@ public final class ClientThread {
             dataHandler.printDataTypes();
         }
 
-        init();
+        try {
+            out = new ObjectOutputStream(socket.getOutputStream());
+            in = new ObjectInputStream(socket.getInputStream());
+            debug("object stream created");
+        } catch (Exception e) {
+            close();
+            debug("object stream error", e);
+        }
+
+        connected = true;
     }
 
     private void initDataHandler() {
-        dataHandler.addDataType(new Data("Connect") {
-            @Override
-            public void handle(Object input) {
-                name = (String) input;
-            }
-        });
         dataHandler.addDataType(new Data("Ping") {
             @Override
             public void handle(Object input) {
-                if(input == null){
-                    input = 0;
-                }
-                long currentTime = System.currentTimeMillis();
-                ping = (long) input - currentTime;
+                send(new Answer(TAG, null));
+            }
+        });
+        dataHandler.addDataType(new Data("PingTask") {
+            @Override
+            public void handle(Object input) {
+                ping = System.currentTimeMillis() - timestamp;
                 debug("ping: " + ping + "ms");
-                send(new Answer(TAG, currentTime));
             }
         });
         dataHandler.addDataType(new Data("ChangeName") {
@@ -85,17 +89,6 @@ public final class ClientThread {
             }
         });
         //TODO
-    }
-
-    private void init() {
-        try {
-            out = new ObjectOutputStream(socket.getOutputStream());
-            in = new ObjectInputStream(socket.getInputStream());
-            debug("object stream created");
-        } catch (Exception e) {
-            close();
-            debug("object stream error", e);
-        }
     }
 
     public void start() {
@@ -161,45 +154,9 @@ public final class ClientThread {
         return connected;
     }
 
-    public boolean connecting() {
-        connected = true;
-        send(new Answer("Connect", id));
-
-        debug("initial connect");
-        for (int counter = 0; connected && counter < RETRY_COUNTER; counter++) {
-            debug("try: " + counter);
-            receive();
-
-            if (request != null && request.TAG() instanceof String TAG) {
-                if (TAG.equals("Connect")) {
-                    handle();
-                    return true;
-                }
-            }
-
-            handling = false;
-        }
-        return false;
-    }
-
-    public UUID reconnecting() {
-        send(new Answer("Reconnect", null));
-
-        debug("reconnect");
-        for (int counter = 0; connected && counter < RETRY_COUNTER; counter++) {
-            debug("try: " + counter);
-            receive();
-
-            if (request != null && request.TAG() instanceof String TAG) {
-                if (TAG.equals("Reconnect")) {
-                    handling = false;
-                    return (UUID) request.request();
-                }
-            }
-
-            handling = false;
-        }
-        return null;
+    public void pingTask(){
+        timestamp = System.currentTimeMillis();
+        send(new Answer("PingTask", null));
     }
 
 
