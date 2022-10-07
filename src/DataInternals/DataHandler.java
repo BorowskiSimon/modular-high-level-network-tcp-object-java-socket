@@ -10,6 +10,11 @@ public final class DataHandler {
         setDEBUG(DEBUG);
     }
 
+    public DataHandler(DataHandler dataHandler){
+        this(dataHandler.DEBUG);
+        dataTypeHashMap.putAll(dataHandler.dataTypeHashMap);
+    }
+
     public void addDataType(Data data) {
         if (!dataTypeHashMap.containsKey(data.TAG)) {
             dataTypeHashMap.put(data.TAG, data);

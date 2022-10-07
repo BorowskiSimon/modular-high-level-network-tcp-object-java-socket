@@ -71,6 +71,7 @@ public final class ClientThread {
         dataHandler.addDataType(new Data("Ping") {
             @Override
             public void handle(Object input) {
+                System.out.println("currently in: " + id + " (data handler: " + dataHandler + ")");
                 send(new Answer(TAG, null));
             }
         });
@@ -114,6 +115,7 @@ public final class ClientThread {
             handling = true;
 
             print("read: " + request);
+            System.out.println("currently in: " + id + " (data handler: " + dataHandler + ")");
         } catch (SocketException e) {
             debug("reading socket error", e);
             close();

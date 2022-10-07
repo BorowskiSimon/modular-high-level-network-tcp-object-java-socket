@@ -15,7 +15,7 @@ public final class ClientManager {
     private final HashMap<UUID, ClientThread> clientThreadHashMap = new HashMap<>();
     private boolean DEBUG = false;
     public final DataHandler dataHandler;
-    private volatile ClientThread currentClientThread;
+    private volatile ClientThread currentClientThread = null;
     private final int max;
 
     public ClientManager(boolean DEBUG, boolean OFFLINE, int max, DataHandler dataHandler) {
@@ -60,6 +60,7 @@ public final class ClientManager {
                         }
                         currentClientThread.name = name;
                         clientThreadHashMap.put(id, currentClientThread);
+                        currentClientThread = null;
 
                         broadcast(new Answer("Chat", clientThreadHashMap.get(id).name + (reconnected ? " reconnected. Welcome back!" : " connected. Welcome!")));
                         printStatus();
@@ -102,9 +103,11 @@ public final class ClientManager {
     }
 
     public void creatingClient(Socket client) {
-        currentClientThread = new ClientThread(DEBUG, client, UUID.randomUUID(), dataHandler);
-        currentClientThread.start();
-        currentClientThread.send(new Answer("Connect", currentClientThread.id));
+        if(currentClientThread == null) {
+            currentClientThread = new ClientThread(DEBUG, client, UUID.randomUUID(), new DataHandler(dataHandler));
+            currentClientThread.start();
+            currentClientThread.send(new Answer("Connect", currentClientThread.id));
+        }
     }
 
     public void send(Answer answer, UUID id) {
