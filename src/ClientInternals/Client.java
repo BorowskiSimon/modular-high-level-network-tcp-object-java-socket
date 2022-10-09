@@ -68,9 +68,8 @@ public final class Client {
     public void setDataHandler(DataHandler dataHandler) {
         this.dataHandler = dataHandler;
         initDataHandler();
-        if (DEBUG) {
-            dataHandler.printDataTypes();
-        }
+        if (!DEBUG) return;
+        debug(dataHandler.toString());
     }
 
     private void initDataHandler() {
@@ -114,13 +113,10 @@ public final class Client {
     }
 
     private void setIPv6() {
-        if (IPv6) {
-            System.setProperty("java.net.preferIPv6Addresses", "true");
-        }
-        debug("ip format: IPv6", IPv6);
-        debug("ip format: IPv4", !IPv6);
-
         try {
+            System.setProperty("java.net.preferIPv6Addresses", "" + IPv6);
+            debug("ip format: IPv" + (IPv6 ? "6" : "4"));
+
             if (IPv6) {
                 ip = String.valueOf(Helper.getPublicIPv6());
             } else {
@@ -171,14 +167,13 @@ public final class Client {
     }
 
     public void send(Request request) {
-        if (on && socket.isConnected() && request != null) {
-            try {
-                out.writeObject(request);
-                out.flush();
-                debug("sent: " + request);
-            } catch (Exception e) {
-                debug("send error", e);
-            }
+        if (!on || !socket.isConnected() || request == null) return;
+        try {
+            out.writeObject(request);
+            out.flush();
+            debug("sent: " + request);
+        } catch (Exception e) {
+            debug("send error", e);
         }
     }
 
@@ -228,10 +223,9 @@ public final class Client {
 
     //DEBUG
     public void setDEBUG(boolean DEBUG) {
-        if (this.DEBUG != DEBUG) {
-            this.DEBUG = DEBUG;
-            debug("debug: " + DEBUG);
-        }
+        if (this.DEBUG == DEBUG) return;
+        this.DEBUG = DEBUG;
+        debug("debug: " + DEBUG);
     }
 
     private void print(String toPrint) {
@@ -239,19 +233,13 @@ public final class Client {
     }
 
     private void debug(String toPrint) {
-        if (DEBUG) {
-            print(toPrint);
-        }
-    }
-
-    private void debug(String toPrint, boolean condition) {
-        if (condition) debug(toPrint);
+        if (!DEBUG) return;
+        print(toPrint);
     }
 
     private void debug(String toPrint, Exception e) {
         debug(toPrint);
-        if (DEBUG) {
-            e.printStackTrace();
-        }
+        if (!DEBUG) return;
+        e.printStackTrace();
     }
 }

@@ -91,45 +91,42 @@ public final class ClientManager {
         String clientIP = socketAddress.getAddress().getHostAddress();
         debug("client ip: " + clientIP);
 
-        if (OFFLINE) {
-            if (clientIP.equals("127.0.0.1")) {
-                creatingClient(client);
-            } else {
-                debug("client blocked. this is a offline server");
-            }
-        } else {
+        if (!OFFLINE) {
             creatingClient(client);
+            return;
+
         }
+        if (!clientIP.equals("127.0.0.1")) {
+            debug("client blocked. this is a offline server");
+            return;
+        }
+        creatingClient(client);
     }
 
     public void creatingClient(Socket client) {
-        if(currentClientThread == null) {
-            currentClientThread = new ClientThread(DEBUG, client, UUID.randomUUID(), new DataHandler(dataHandler));
-            currentClientThread.start();
-            currentClientThread.send(new Answer("Connect", currentClientThread.id));
-        }
+        if (currentClientThread != null) return;
+        currentClientThread = new ClientThread(DEBUG, client, UUID.randomUUID(), new DataHandler(dataHandler));
+        currentClientThread.start();
+        currentClientThread.send(new Answer("Connect", currentClientThread.id));
     }
 
     public void send(Answer answer, UUID id) {
-        if (isClient(id)) {
-            clientThreadHashMap.get(id).send(answer);
-        }
+        if (!isClient(id)) return;
+        clientThreadHashMap.get(id).send(answer);
     }
 
     public void broadcast(Answer answer) {
         int currentConnections = getConnectionAmount();
-        if (currentConnections > 0) {
+        if (currentConnections == 0) return;
+        print("broadcasting to " + currentConnections + " client" + (currentConnections > 1 ? "s " : " ") + answer);
 
-            print("broadcasting to " + currentConnections + " client" + (currentConnections > 1 ? "s " : " ") + answer);
+        clientThreadHashMap.forEach((key, value) -> {
+            if (value.isConnected()) {
+                value.send(answer);
+            }
+        });
 
-            clientThreadHashMap.forEach((key, value) -> {
-                if (value.isConnected()) {
-                    value.send(answer);
-                }
-            });
-
-            debug("broadcast: " + answer);
-        }
+        debug("broadcast: " + answer);
     }
 
     private boolean isClient(UUID client) {
@@ -157,10 +154,9 @@ public final class ClientManager {
 
     //DEBUG
     public void setDEBUG(boolean DEBUG) {
-        if (this.DEBUG != DEBUG) {
-            this.DEBUG = DEBUG;
-            debug("debug: " + DEBUG);
-        }
+        if (this.DEBUG == DEBUG) return;
+        this.DEBUG = DEBUG;
+        debug("debug: " + DEBUG);
     }
 
     private void print(String toPrint) {
@@ -173,9 +169,8 @@ public final class ClientManager {
     }
 
     private void debug(String toPrint) {
-        if (DEBUG) {
-            print(toPrint);
-        }
+        if (!DEBUG) return;
+        print(toPrint);
     }
 
     private void debug(UUID id, String toPrint) {

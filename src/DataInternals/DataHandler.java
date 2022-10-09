@@ -10,53 +10,50 @@ public final class DataHandler {
         setDEBUG(DEBUG);
     }
 
-    public DataHandler(DataHandler dataHandler){
+    public DataHandler(DataHandler dataHandler) {
         this(dataHandler.DEBUG);
         dataTypeHashMap.putAll(dataHandler.dataTypeHashMap);
     }
 
     public void addDataType(Data data) {
-        if (!dataTypeHashMap.containsKey(data.TAG)) {
-            dataTypeHashMap.put(data.TAG, data);
-            debug("'" + data.TAG + "' was added");
-        } else {
+        if (dataTypeHashMap.containsKey(data.TAG)) {
             debug("'" + data.TAG + "' already existed");
+            return;
         }
+        dataTypeHashMap.put(data.TAG, data);
+        debug("'" + data.TAG + "' was added");
     }
 
-    public boolean exist(Object TAG) {
-        Data dataDecoder = dataTypeHashMap.get(TAG);
-        if (dataDecoder == null) {
-            debug("'" + TAG + "' was not found");
-            return false;
-        }
-        return true;
+    public boolean contain(Object TAG) {
+        if (dataTypeHashMap.get(TAG) != null) return true;
+        debug("'" + TAG + "' was not found");
+        return false;
     }
 
     public void handle(Object TAG, Object input) {
-        if (exist(TAG)) {
-            debug("handling '" + TAG + "'");
-            dataTypeHashMap.get(TAG).handle(input);
-        }
+        if (!contain(TAG)) return;
+        debug("handling '" + TAG + "'");
+        dataTypeHashMap.get(TAG).handle(input);
     }
 
-    public void printDataTypes() {
+    @Override
+    public String toString(){
         StringBuilder stringBuilder = new StringBuilder();
         dataTypeHashMap.forEach((key, value) -> stringBuilder.append("'").append(key).append("'").append(", "));
 
-        debug("can handle following data types: " + stringBuilder.substring(0, stringBuilder.length() - 2));
+        return "can handle following data types: " + stringBuilder.substring(0, stringBuilder.length() - 2);
     }
 
 
     //DEBUG
     public void setDEBUG(boolean DEBUG) {
-        if (this.DEBUG != DEBUG) {
-            this.DEBUG = DEBUG;
-            debug("debug: " + DEBUG);
-        }
+        if (this.DEBUG == DEBUG) return;
+        this.DEBUG = DEBUG;
+        debug("debug: " + DEBUG);
     }
 
     private void debug(String toPrint) {
-        if (DEBUG) System.out.println("Data Handler >> " + toPrint + " <<");
+        if (!DEBUG) return;
+        System.out.println("Data Handler >> " + toPrint + " <<");
     }
 }

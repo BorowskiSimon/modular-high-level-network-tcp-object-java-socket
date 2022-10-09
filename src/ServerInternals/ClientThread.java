@@ -53,9 +53,7 @@ public final class ClientThread {
 
         initDataHandler();
 
-        if (DEBUG) {
-            dataHandler.printDataTypes();
-        }
+        debug(dataHandler.toString());
 
         try {
             out = new ObjectOutputStream(socket.getOutputStream());
@@ -165,10 +163,9 @@ public final class ClientThread {
 
     //DEBUG
     public void setDEBUG(boolean DEBUG) {
-        if (this.DEBUG != DEBUG) {
-            this.DEBUG = DEBUG;
-            debug("debug: " + DEBUG);
-        }
+        if (this.DEBUG == DEBUG) return;
+        this.DEBUG = DEBUG;
+        debug("debug: " + DEBUG);
     }
 
     private void print(String toPrint) {
@@ -176,15 +173,13 @@ public final class ClientThread {
     }
 
     private void debug(String toPrint) {
-        if (DEBUG) {
-            print(toPrint);
-        }
+        if (!DEBUG) return;
+        print(toPrint);
     }
 
     private void debug(String toPrint, Exception e) {
         debug(toPrint);
-        if (DEBUG) {
-            e.printStackTrace();
-        }
+        if (!DEBUG) return;
+        e.printStackTrace();
     }
 }
