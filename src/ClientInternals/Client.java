@@ -13,21 +13,22 @@ import java.net.SocketException;
 import java.util.UUID;
 
 public final class Client {
+    private boolean DEBUG = false;
     private Socket socket;
-    private ObjectOutputStream out;
-    private ObjectInputStream in;
     private UUID id = null;
     public final String serverIP;
     public String ip;
-    public volatile String name;
     public final int port;
-    private boolean DEBUG = false;
-    private volatile boolean on = false;
     private final boolean IPv6;
-    private volatile long ping = 0, timestamp;
-    private DataHandler dataHandler;
-    private volatile boolean handling = false;
     private volatile Answer answer;
+    private DataHandler dataHandler;
+    private volatile boolean on = false;
+    private volatile boolean handling = false;
+    public volatile String name;
+    private volatile long ping = 0;
+    private volatile long timestamp;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
 
     private final Thread thread = new Thread(new Runnable() {
         @Override

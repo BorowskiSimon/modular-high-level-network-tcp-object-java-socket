@@ -17,7 +17,11 @@ public final class RunnableClient {
             name = args[1];
         }
 
+
+
         System.out.println("\n\nStart Runnable Client");
+
+
 
         DataHandler dataHandler = new DataHandler(false);
         dataHandler.addDataType(new Data("Chat") {
@@ -37,7 +41,9 @@ public final class RunnableClient {
         });
          */
 
+
         Client client = new Client(false, name, ip, 25565, false);
+
 
         /*
         dataHandler.addDataType(new Data(//TODO) {
@@ -50,11 +56,12 @@ public final class RunnableClient {
         });
          */
 
+
         client.setDataHandler(dataHandler);
         client.start();
 
 
-        Scanner scanner = new Scanner(System.in, "Cp850");
+        Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_16);
         String input;
         do {
             input = scanner.nextLine();
@@ -66,7 +73,6 @@ public final class RunnableClient {
                 client.send(new Request("Chat", client.name + ": " + input));
             }
         } while (client.isOn());
-
 
         client.stop();
     }

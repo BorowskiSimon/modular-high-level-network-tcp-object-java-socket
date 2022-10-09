@@ -10,7 +10,9 @@ import java.util.UUID;
 
 public final class Server {
     //FINALS
-    public final int port, max, CONNECTION_LIMIT_DELAY;
+    public final int port;
+    public final int max;
+    public final int DELAY_IF_LIMIT_REACHED;
     public final boolean OFFLINE, IPv6;
     private ClientManager clientManager;
 
@@ -22,7 +24,7 @@ public final class Server {
 
     private final Thread connectionThread = new Thread(this::connectionLoop);
 
-    public Server(boolean DEBUG, int port, int max, boolean OFFLINE, boolean IPv6, int CONNECTION_LIMIT_DELAY) {
+    public Server(boolean DEBUG, int port, int max, boolean OFFLINE, boolean IPv6, int DELAY_IF_LIMIT_REACHED) {
         setDEBUG(DEBUG);
 
         //FINALS
@@ -31,8 +33,8 @@ public final class Server {
         debug("max connections: " + max);
         this.OFFLINE = OFFLINE;
         debug("runs offline", OFFLINE);
-        this.CONNECTION_LIMIT_DELAY = CONNECTION_LIMIT_DELAY;
-        debug("connection limit delay: " + CONNECTION_LIMIT_DELAY);
+        this.DELAY_IF_LIMIT_REACHED = DELAY_IF_LIMIT_REACHED;
+        debug("connection limit delay: " + DELAY_IF_LIMIT_REACHED);
 
         this.IPv6 = IPv6;
         setIPv6();
@@ -109,7 +111,7 @@ public final class Server {
             } else {
                 debug("client connection limit reached");
                 try {
-                    Thread.sleep(CONNECTION_LIMIT_DELAY);
+                    Thread.sleep(DELAY_IF_LIMIT_REACHED);
                 } catch (Exception e) {
                     debug("wait error", e);
                 }

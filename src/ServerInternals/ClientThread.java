@@ -12,18 +12,20 @@ import java.net.SocketException;
 import java.util.UUID;
 
 public final class ClientThread {
-    private boolean DEBUG;
+    private boolean DEBUG = false;
     private final Socket socket;
     public final UUID id;
     public volatile Request request;
 
     public final DataHandler dataHandler;
 
-    private volatile boolean connected, handling = false;
+    private volatile boolean connected;
+    private volatile boolean handling = false;
 
     public volatile String name;
 
-    public volatile long ping, timestamp;
+    public volatile long ping = 0;
+    private volatile long timestamp;
 
     private ObjectOutputStream out;
     private ObjectInputStream in;
@@ -155,7 +157,7 @@ public final class ClientThread {
         return connected;
     }
 
-    public void pingTask(){
+    public void pingTask() {
         timestamp = System.currentTimeMillis();
         send(new Answer("PingTask", null));
     }
@@ -169,19 +171,19 @@ public final class ClientThread {
         }
     }
 
-    private void print(String toPrint){
+    private void print(String toPrint) {
         System.out.println("Client[" + id + "] >> " + toPrint + " <<");
     }
 
     private void debug(String toPrint) {
-        if (DEBUG){
+        if (DEBUG) {
             print(toPrint);
         }
     }
 
-    private void debug(String toPrint, Exception e){
+    private void debug(String toPrint, Exception e) {
         debug(toPrint);
-        if(DEBUG) {
+        if (DEBUG) {
             e.printStackTrace();
         }
     }
