@@ -17,14 +17,14 @@ public final class Client {
     private Socket socket;
     private UUID id = null;
     public final String serverIP;
-    public String ip;
+    private String ip;
     public final int port;
-    private final boolean IPv6;
+    public final boolean IPv6;
     private volatile Answer answer;
     private DataHandler dataHandler;
     private volatile boolean on = false;
     private volatile boolean handling = false;
-    public volatile String name;
+    private volatile String name;
     private volatile long ping = 0;
     private volatile long timestamp;
     private ObjectOutputStream out;
@@ -204,6 +204,11 @@ public final class Client {
         print("stopped");
     }
 
+    public void ping() {
+        timestamp = System.currentTimeMillis();
+        send(new Request("Ping", null));
+    }
+
     public boolean isOn() {
         return on;
     }
@@ -212,9 +217,12 @@ public final class Client {
         return id;
     }
 
-    public void ping() {
-        timestamp = System.currentTimeMillis();
-        send(new Request("Ping", null));
+    public String getIp() {
+        return ip;
+    }
+
+    public String getName() {
+        return name;
     }
 
 

@@ -46,7 +46,7 @@ public final class RunnableClient {
             } else if (input.equals("ping")) {
                 client.ping();
             } else {
-                client.send(new Request("Chat", client.name + ": " + input));
+                client.send(new Request("Chat", client.getName() + ": " + input));
             }
         } while (client.isOn());
 
