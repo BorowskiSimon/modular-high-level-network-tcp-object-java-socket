@@ -10,12 +10,12 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class ClientManager {
+final class ClientManager {
     public final boolean OFFLINE;
     private final HashMap<UUID, ClientThread> clientThreadHashMap = new HashMap<>();
     private boolean DEBUG = false;
     public final DataHandler dataHandler;
-    private volatile ClientThread currentClientThread = null;
+    private volatile ClientThread newClientThread = null;
     private final int max;
 
     public ClientManager(boolean DEBUG, boolean OFFLINE, int max, DataHandler dataHandler) {
@@ -28,7 +28,7 @@ public final class ClientManager {
     }
 
     private void initDataHandler() {
-        dataHandler.addDataType(new Data("Disconnect") {
+        dataHandler.addData(new Data("Disconnect") {
             @Override
             public void handle(Object input) {
                 if (input instanceof UUID uuid) {
@@ -40,13 +40,13 @@ public final class ClientManager {
                 }
             }
         });
-        dataHandler.addDataType(new Data("Chat") {
+        dataHandler.addData(new Data("Chat") {
             @Override
             public void handle(Object input) {
                 broadcast(new Answer(TAG, input));
             }
         });
-        dataHandler.addDataType(new Data("Connect") {
+        dataHandler.addData(new Data("Connect") {
             @Override
             public void handle(Object input) {
                 if (input instanceof Object[] objects) {
@@ -58,9 +58,9 @@ public final class ClientManager {
                             clientThreadHashMap.remove(id);
                             debug("removed old thread: " + id);
                         }
-                        currentClientThread.name = name;
-                        clientThreadHashMap.put(id, currentClientThread);
-                        currentClientThread = null;
+                        newClientThread.name = name;
+                        clientThreadHashMap.put(id, newClientThread);
+                        newClientThread = null;
 
                         broadcast(new Answer("Chat", clientThreadHashMap.get(id).name + (reconnected ? " reconnected. Welcome back!" : " connected. Welcome!")));
                         printStatus();
@@ -68,7 +68,6 @@ public final class ClientManager {
                 }
             }
         });
-        //TODO
     }
 
     public int getConnectionAmount() {
@@ -104,10 +103,10 @@ public final class ClientManager {
     }
 
     public void creatingClient(Socket client) {
-        if (currentClientThread != null) return;
-        currentClientThread = new ClientThread(DEBUG, client, UUID.randomUUID(), new DataHandler(dataHandler));
-        currentClientThread.start();
-        currentClientThread.send(new Answer("Connect", currentClientThread.id));
+        if (newClientThread != null) return;
+        newClientThread = new ClientThread(DEBUG, client, UUID.randomUUID(), new DataHandler(dataHandler));
+        newClientThread.start();
+        newClientThread.send(new Answer("Connect", newClientThread.id));
     }
 
     public void send(Answer answer, UUID id) {

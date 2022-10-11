@@ -15,7 +15,7 @@ public final class DataHandler {
         dataTypeHashMap.putAll(dataHandler.dataTypeHashMap);
     }
 
-    public void addDataType(Data data) {
+    public void addData(Data data) {
         if (dataTypeHashMap.containsKey(data.TAG)) {
             debug("'" + data.TAG + "' already existed");
             return;

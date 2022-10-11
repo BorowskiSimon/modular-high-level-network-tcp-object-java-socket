@@ -38,7 +38,7 @@ public final class Client {
                 if (handling) {
                     handle();
                 } else {
-                    receive();
+                    read();
                 }
             }
             debug("end of loop");
@@ -46,8 +46,6 @@ public final class Client {
     });
 
     public Client(boolean DEBUG, String name, String serverIP, int port, boolean IPv6) {
-        //TODO timeout für z.b. ping nach 3 sekunden (evtl je nach Data)
-
         setDEBUG(DEBUG);
 
         changeName(name);
@@ -73,13 +71,13 @@ public final class Client {
     }
 
     private void initDataHandler() {
-        dataHandler.addDataType(new Data("PingTask") {
+        dataHandler.addData(new Data("PingTask") {
             @Override
             public void handle(Object input) {
                 send(new Request(TAG, null));
             }
         });
-        dataHandler.addDataType(new Data("Ping") {
+        dataHandler.addData(new Data("Ping") {
             @Override
             public void handle(Object input) {
                 ping = System.currentTimeMillis() - timestamp;
@@ -87,7 +85,7 @@ public final class Client {
                 System.out.println("ping: " + ping + "ms");
             }
         });
-        dataHandler.addDataType(new Data("Connect") {
+        dataHandler.addData(new Data("Connect") {
             @Override
             public void handle(Object input) {
                 id = (UUID) input;
@@ -96,14 +94,13 @@ public final class Client {
                 debug("connected");
             }
         });
-        dataHandler.addDataType(new Data("Chat") {
+        dataHandler.addData(new Data("Chat") {
             @Override
             public void handle(Object input) {
-                //TODO make javadoc for overwriting ;)
+                //TODO make javadoc for overwriting ;). every predefined message (also shared) should be marked or something. maybe enumerated.
                 System.out.println(input);
             }
         });
-        //TODO
     }
 
     private void changeName(String name) {
@@ -144,7 +141,7 @@ public final class Client {
         }
     }
 
-    private void receive() {
+    private void read() {
         try {
             Object tmp = in.readObject();
             if (tmp instanceof Answer answer) {

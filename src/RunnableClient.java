@@ -18,50 +18,26 @@ public final class RunnableClient {
         }
 
 
-
         System.out.println("\n\nStart Runnable Client");
-
-
-
-        DataHandler dataHandler = new DataHandler(false);
-        dataHandler.addDataType(new Data("Chat") {
-            @Override
-            public void handle(Object input) {
-                System.out.println(input);
-            }
-        });
-        /*
-        dataHandler.addDataType(new Data(//TODO) {
-            @Override
-            public void handle(Object input) {
-                //TODO
-                // example:
-                // System.out.println("Test Print: " + input);
-            }
-        });
-         */
 
 
         Client client = new Client(false, name, ip, 25565, false);
 
 
-        /*
-        dataHandler.addDataType(new Data(//TODO) {
+        DataHandler dataHandler = new DataHandler(false);
+        dataHandler.addData(new Data("Chat") {
             @Override
             public void handle(Object input) {
-                //TODO
-                // example:
-                // client.close();
+                System.out.println(input);
             }
         });
-         */
 
 
         client.setDataHandler(dataHandler);
         client.start();
 
 
-        Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_16);
+        Scanner scanner = new Scanner(System.in);
         String input;
         do {
             input = scanner.nextLine();
@@ -73,6 +49,7 @@ public final class RunnableClient {
                 client.send(new Request("Chat", client.name + ": " + input));
             }
         } while (client.isOn());
+
 
         client.stop();
     }

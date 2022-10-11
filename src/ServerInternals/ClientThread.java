@@ -11,7 +11,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.UUID;
 
-public final class ClientThread {
+final class ClientThread {
     private boolean DEBUG = false;
     private final Socket socket;
     public final UUID id;
@@ -37,7 +37,7 @@ public final class ClientThread {
                 if (handling) {
                     handle();
                 } else {
-                    receive();
+                    read();
                 }
             }
             debug("end of loop");
@@ -68,27 +68,26 @@ public final class ClientThread {
     }
 
     private void initDataHandler() {
-        dataHandler.addDataType(new Data("Ping") {
+        dataHandler.addData(new Data("Ping") {
             @Override
             public void handle(Object input) {
                 System.out.println("currently in: " + id + " (data handler: " + dataHandler + ")");
                 send(new Answer(TAG, null));
             }
         });
-        dataHandler.addDataType(new Data("PingTask") {
+        dataHandler.addData(new Data("PingTask") {
             @Override
             public void handle(Object input) {
                 ping = System.currentTimeMillis() - timestamp;
                 debug("ping: " + ping + "ms");
             }
         });
-        dataHandler.addDataType(new Data("ChangeName") {
+        dataHandler.addData(new Data("ChangeName") {
             @Override
             public void handle(Object input) {
                 name = (String) input;
             }
         });
-        //TODO
     }
 
     public void start() {
@@ -106,7 +105,7 @@ public final class ClientThread {
         }
     }
 
-    private void receive() {
+    private void read() {
         try {
             Object tmp = in.readObject();
             if (tmp instanceof Request request) {
