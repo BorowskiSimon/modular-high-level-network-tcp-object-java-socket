@@ -51,7 +51,7 @@ public final class Client {
         changeName(name);
 
         this.serverIP = serverIP;
-        debug("ip: " + serverIP);
+        debug("server ip: " + serverIP);
         this.port = port;
         debug("port: " + port);
 
@@ -119,6 +119,9 @@ public final class Client {
             } else {
                 ip = String.valueOf(Helper.getPublicIPv4());
             }
+            ip = ip.substring(1);
+
+            debug("ip: " + ip);
         } catch (Exception e) {
             debug("public ip error", e);
         }

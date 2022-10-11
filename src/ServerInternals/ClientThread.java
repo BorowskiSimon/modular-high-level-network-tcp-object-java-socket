@@ -114,7 +114,6 @@ final class ClientThread {
             handling = true;
 
             print("read: " + request);
-            System.out.println("currently in: " + id + " (data handler: " + dataHandler + ")");
         } catch (SocketException e) {
             debug("reading socket error", e);
             close();

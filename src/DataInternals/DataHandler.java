@@ -41,7 +41,7 @@ public final class DataHandler {
         StringBuilder stringBuilder = new StringBuilder();
         dataTypeHashMap.forEach((key, value) -> stringBuilder.append("'").append(key).append("'").append(", "));
 
-        return "can handle following data types: " + stringBuilder.substring(0, stringBuilder.length() - 2);
+        return "Data Handler >> " + "can handle following data types: " + stringBuilder.substring(0, stringBuilder.length() - 2) + " <<";
     }
 
 

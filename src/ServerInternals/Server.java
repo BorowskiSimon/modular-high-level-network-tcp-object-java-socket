@@ -2,6 +2,7 @@ package ServerInternals;
 
 import DataInternals.Answer;
 import DataInternals.DataHandler;
+import DataInternals.Request;
 import Utility.Helper;
 
 import java.net.ServerSocket;
@@ -66,18 +67,24 @@ public final class Server {
         }
 
         try {
-            if (!OFFLINE) {
-                if (IPv6) {
-                    ipAddress = Helper.getPublicIPv6().getHostAddress();
-                } else {
-                    ipAddress = Helper.getPublicIPv4().getHostAddress();
-                }
-            }
+            ipAddress = initIP();
+
             print("ip: " + ipAddress);
             print("port: " + port);
         } catch (Exception e) {
             debug("ip init error", e);
         }
+    }
+
+    private String initIP() throws Exception {
+        if (!OFFLINE) {
+            if (IPv6) {
+                return Helper.getPublicIPv6().getHostAddress();
+            } else {
+                return Helper.getPublicIPv4().getHostAddress();
+            }
+        }
+        return String.valueOf(socket.getInetAddress().getHostAddress());
     }
 
     public void start() {
