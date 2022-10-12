@@ -13,13 +13,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 final class ClientManager {
     public final boolean OFFLINE;
-    private boolean on = false;
+    private boolean on = true;
     private final HashMap<UUID, ClientThread> clientThreadHashMap = new HashMap<>();
     private boolean DEBUG = false;
     public final DataHandler dataHandler;
     private volatile ClientThread newClientThread = null;
     private final int max;
-    private final Thread connectionCheckThread = new Thread(this::heartbeat);
+    private final Thread heartbeatThread = new Thread(this::heartbeat);
 
     public ClientManager(boolean DEBUG, boolean OFFLINE, int max, DataHandler dataHandler) {
         setDEBUG(DEBUG);
@@ -29,8 +29,7 @@ final class ClientManager {
         this.dataHandler = dataHandler;
         initDataHandler();
 
-        on = true;
-        connectionCheckThread.start();
+        heartbeatThread.start();
     }
 
     private void initDataHandler() {
@@ -156,7 +155,7 @@ final class ClientManager {
         creatingClient(client);
     }
 
-    public void creatingClient(Socket client) {
+    private void creatingClient(Socket client) {
         if (newClientThread != null) return;
         newClientThread = new ClientThread(DEBUG, client, UUID.randomUUID(), new DataHandler(dataHandler));
         newClientThread.start();
@@ -188,8 +187,23 @@ final class ClientManager {
 
     public void closeConnections() {
         on = false;
+        newClientThread = null;
+
+        closeHeartbeat();
         clientThreadHashMap.forEach((key, value) -> closeClient(key));
+
+        debug("all connection closed");
         printStatus();
+    }
+
+    private void closeHeartbeat() {
+        if (!heartbeatThread.isAlive()) return;
+        try {
+            heartbeatThread.join();
+            debug("heartbeat thread stopped");
+        } catch (Exception e) {
+            debug("heartbeat thread stop error", e);
+        }
     }
 
     public void closeClient(UUID id) {
