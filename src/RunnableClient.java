@@ -3,7 +3,7 @@ import DataInternals.Data;
 import DataInternals.DataHandler;
 import DataInternals.Request;
 
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 import java.util.Scanner;
 
 public final class RunnableClient {

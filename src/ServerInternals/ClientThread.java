@@ -13,6 +13,7 @@ import java.util.UUID;
 
 final class ClientThread {
     private boolean DEBUG = false;
+    private boolean waiting = false;
     private final Socket socket;
     public final UUID id;
     public volatile Request request;
@@ -151,6 +152,14 @@ final class ClientThread {
 
     public boolean isConnected() {
         return connected;
+    }
+
+    public void setWaiting(boolean waiting) {
+        this.waiting = waiting;
+    }
+
+    public boolean isWaiting(){
+        return waiting;
     }
 
     public void pingTask() {
