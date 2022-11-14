@@ -13,5 +13,14 @@ public final class RunnableServer {
             }
         });
         server.start();
+
+        try {
+            System.out.println("SERVER WILL CLOSE AUTOMATICALLY AFTER 1 HOUR!");
+            Thread.sleep(3600);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        server.close();
     }
 }

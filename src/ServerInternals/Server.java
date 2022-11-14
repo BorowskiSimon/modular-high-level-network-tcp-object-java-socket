@@ -17,7 +17,7 @@ public final class Server {
     public final int DELAY_IF_LIMIT_REACHED;
     public final boolean OFFLINE;
     public final boolean IPv6;
-    private ClientManager clientManager;
+    private final ClientManager clientManager;
     private volatile boolean on = false;
     private String ipAddress = "localhost";
 

@@ -21,7 +21,7 @@ public final class Client {
     public final int port;
     public final boolean IPv6;
     private volatile Answer answer;
-    private OnReceiveHandler onReceiveHandler;
+    private final OnReceiveHandler onReceiveHandler;
     private volatile boolean on = false;
     private volatile boolean handling = false;
     private volatile String name;
@@ -58,6 +58,7 @@ public final class Client {
         this.IPv6 = IPv6;
         setIPv6();
 
+        onReceiveHandler = new OnReceiveHandler(DEBUG);
         init();
         if (!DEBUG) return;
         debug(onReceiveHandler.toString());
