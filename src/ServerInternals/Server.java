@@ -40,7 +40,7 @@ public final class Server {
 
         init();
 
-        clientManager = new ClientManager(DEBUG, OFFLINE, max, new OnReceiveHandler(DEBUG));
+        clientManager = new ClientManager(DEBUG, OFFLINE, max);
     }
 
     public Server(int port, int max) {
@@ -107,6 +107,7 @@ public final class Server {
         while (on && !socket.isClosed()) {
             if (clientManager.getConnectionAmount() < max) {
                 try {
+                    debug("waiting for new client");
                     Socket client = socket.accept();
                     if (!on) break;
                     print("client connecting");

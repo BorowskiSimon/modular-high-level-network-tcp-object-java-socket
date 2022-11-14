@@ -16,7 +16,7 @@ public final class RunnableServer {
 
         try {
             System.out.println("SERVER WILL CLOSE AUTOMATICALLY AFTER 1 HOUR!");
-            Thread.sleep(3600);
+            Thread.sleep(3600000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

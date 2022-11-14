@@ -21,12 +21,12 @@ final class ClientManager {
     private final int max;
     private final Thread heartbeatThread = new Thread(this::heartbeat);
 
-    public ClientManager(boolean DEBUG, boolean OFFLINE, int max, OnReceiveHandler onReceiveHandler) {
+    public ClientManager(boolean DEBUG, boolean OFFLINE, int max) {
         setDEBUG(DEBUG);
         this.OFFLINE = OFFLINE;
         this.max = max;
 
-        this.onReceiveHandler = onReceiveHandler;
+        this.onReceiveHandler = new OnReceiveHandler(DEBUG);
         init();
 
         heartbeatThread.start();
@@ -88,8 +88,10 @@ final class ClientManager {
     }
 
     public void addOnReceive(OnReceive onReceive) {
+        debug("adding " + onReceive.TAG + " for all new clients");
         onReceiveHandler.add(onReceive);
         clientThreadHashMap.forEach(((uuid, clientThread) -> {
+            debug(uuid, "adding " + onReceive.TAG);
             clientThread.addOnReceive(onReceive);
         }));
     }

@@ -190,6 +190,10 @@ public final class Client {
         debug("disconnecting");
         on = false;
         try {
+            if(thread.isAlive()){
+                thread.join();
+                debug("thread stopped");
+            }
             if (in != null) {
                 in.close();
                 debug("input stream closed");

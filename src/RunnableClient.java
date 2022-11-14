@@ -31,7 +31,7 @@ public final class RunnableClient {
 
         Scanner scanner = new Scanner(System.in);
         String input;
-        do {
+        while(client.isOn()) {
             input = scanner.nextLine();
             if (input.equals("exit")) {
                 break;
@@ -40,7 +40,7 @@ public final class RunnableClient {
             } else {
                 client.send(new Request("Chat", client.getName() + ": " + input));
             }
-        } while (client.isOn());
+        }
 
 
         client.stop();
