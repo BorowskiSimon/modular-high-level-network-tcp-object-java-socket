@@ -1,8 +1,8 @@
 package ServerInternals;
 
 import DataInternals.Answer;
-import DataInternals.Data;
-import DataInternals.DataHandler;
+import DataInternals.OnReceive;
+import DataInternals.OnReceiveHandler;
 
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -16,26 +16,26 @@ final class ClientManager {
     private boolean on = true;
     private final HashMap<UUID, ClientThread> clientThreadHashMap = new HashMap<>();
     private boolean DEBUG = false;
-    public final DataHandler dataHandler;
+    private final OnReceiveHandler onReceiveHandler;
     private volatile ClientThread newClientThread = null;
     private final int max;
     private final Thread heartbeatThread = new Thread(this::heartbeat);
 
-    public ClientManager(boolean DEBUG, boolean OFFLINE, int max, DataHandler dataHandler) {
+    public ClientManager(boolean DEBUG, boolean OFFLINE, int max, OnReceiveHandler onReceiveHandler) {
         setDEBUG(DEBUG);
         this.OFFLINE = OFFLINE;
         this.max = max;
 
-        this.dataHandler = dataHandler;
-        initDataHandler();
+        this.onReceiveHandler = onReceiveHandler;
+        init();
 
         heartbeatThread.start();
     }
 
-    private void initDataHandler() {
-        dataHandler.addData(new Data("Disconnect") {
+    private void init() {
+        onReceiveHandler.add(new OnReceive("Disconnect") {
             @Override
-            public void handle(Object input) {
+            public void doUponReceipt(Object input) {
                 if (input instanceof UUID uuid) {
                     broadcast(new Answer("Chat", clientThreadHashMap.get(uuid).name + " disconnected."));
                     clientThreadHashMap.get(uuid).close();
@@ -45,15 +45,15 @@ final class ClientManager {
                 }
             }
         });
-        dataHandler.addData(new Data("Chat") {
+        onReceiveHandler.add(new OnReceive("Chat") {
             @Override
-            public void handle(Object input) {
+            public void doUponReceipt(Object input) {
                 broadcast(new Answer(TAG, input));
             }
         });
-        dataHandler.addData(new Data("Connect") {
+        onReceiveHandler.add(new OnReceive("Connect") {
             @Override
-            public void handle(Object input) {
+            public void doUponReceipt(Object input) {
                 if (input instanceof Object[] objects) {
                     if (objects[0] instanceof UUID id) {
                         String name = (String) objects[1];
@@ -85,6 +85,13 @@ final class ClientManager {
                 }
             }
         });
+    }
+
+    public void addOnReceive(OnReceive onReceive) {
+        onReceiveHandler.add(onReceive);
+        clientThreadHashMap.forEach(((uuid, clientThread) -> {
+            clientThread.addOnReceive(onReceive);
+        }));
     }
 
     private void heartbeat() {
@@ -157,7 +164,7 @@ final class ClientManager {
 
     private void creatingClient(Socket client) {
         if (newClientThread != null) return;
-        newClientThread = new ClientThread(DEBUG, client, UUID.randomUUID(), new DataHandler(dataHandler));
+        newClientThread = new ClientThread(DEBUG, client, UUID.randomUUID(), new OnReceiveHandler(onReceiveHandler));
         newClientThread.start();
         newClientThread.send(new Answer("Connect", newClientThread.id));
     }

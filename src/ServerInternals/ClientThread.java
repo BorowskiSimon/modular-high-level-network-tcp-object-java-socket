@@ -1,8 +1,8 @@
 package ServerInternals;
 
 import DataInternals.Answer;
-import DataInternals.Data;
-import DataInternals.DataHandler;
+import DataInternals.OnReceive;
+import DataInternals.OnReceiveHandler;
 import DataInternals.Request;
 
 import java.io.ObjectInputStream;
@@ -18,7 +18,7 @@ final class ClientThread {
     public final UUID id;
     public volatile Request request;
 
-    public final DataHandler dataHandler;
+    public final OnReceiveHandler onReceiveHandler;
 
     private volatile boolean connected;
     private volatile boolean handling = false;
@@ -36,7 +36,7 @@ final class ClientThread {
             debug("start loop");
             while (connected && socket.isConnected()) {
                 if (handling) {
-                    handle();
+                    onReceive();
                 } else {
                     read();
                 }
@@ -45,16 +45,16 @@ final class ClientThread {
         }
     });
 
-    public ClientThread(boolean DEBUG, Socket socket, UUID id, DataHandler dataHandler) {
+    public ClientThread(boolean DEBUG, Socket socket, UUID id, OnReceiveHandler onReceiveHandler) {
         setDEBUG(DEBUG);
 
         this.socket = socket;
         this.id = id;
-        this.dataHandler = dataHandler;
+        this.onReceiveHandler = onReceiveHandler;
 
-        initDataHandler();
+        init();
 
-        debug(dataHandler.toString());
+        debug(onReceiveHandler.toString());
 
         try {
             out = new ObjectOutputStream(socket.getOutputStream());
@@ -68,27 +68,31 @@ final class ClientThread {
         connected = true;
     }
 
-    private void initDataHandler() {
-        dataHandler.addData(new Data("Ping") {
+    private void init() {
+        onReceiveHandler.add(new OnReceive("Ping") {
             @Override
-            public void handle(Object input) {
-                System.out.println("currently in: " + id + " (data handler: " + dataHandler + ")");
+            public void doUponReceipt(Object input) {
+                System.out.println("currently in: " + id + " (data handler: " + onReceiveHandler + ")");
                 send(new Answer(TAG, null));
             }
         });
-        dataHandler.addData(new Data("PingTask") {
+        onReceiveHandler.add(new OnReceive("PingTask") {
             @Override
-            public void handle(Object input) {
+            public void doUponReceipt(Object input) {
                 ping = System.currentTimeMillis() - timestamp;
                 debug("ping: " + ping + "ms");
             }
         });
-        dataHandler.addData(new Data("ChangeName") {
+        onReceiveHandler.add(new OnReceive("ChangeName") {
             @Override
-            public void handle(Object input) {
+            public void doUponReceipt(Object input) {
                 name = (String) input;
             }
         });
+    }
+
+    public void addOnReceive(OnReceive onReceive) {
+        onReceiveHandler.add(onReceive);
     }
 
     public void start() {
@@ -124,8 +128,8 @@ final class ClientThread {
         }
     }
 
-    private void handle() {
-        dataHandler.handle(request.TAG(), request.request());
+    private void onReceive() {
+        onReceiveHandler.onReceive(request.TAG(), request.request());
         handling = false;
     }
 
@@ -158,7 +162,7 @@ final class ClientThread {
         this.waiting = waiting;
     }
 
-    public boolean isWaiting(){
+    public boolean isWaiting() {
         return waiting;
     }
 

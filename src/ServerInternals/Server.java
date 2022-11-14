@@ -1,8 +1,8 @@
 package ServerInternals;
 
 import DataInternals.Answer;
-import DataInternals.DataHandler;
-import DataInternals.Request;
+import DataInternals.OnReceive;
+import DataInternals.OnReceiveHandler;
 import Utility.Helper;
 
 import java.net.ServerSocket;
@@ -39,14 +39,16 @@ public final class Server {
         setIPv6();
 
         init();
+
+        clientManager = new ClientManager(DEBUG, OFFLINE, max, new OnReceiveHandler(DEBUG));
     }
 
     public Server(int port, int max) {
         this(false, port, max, false, false, 1000);
     }
 
-    public void setDataHandler(DataHandler dataHandler) {
-        clientManager = new ClientManager(DEBUG, OFFLINE, max, dataHandler);
+    public void addOnReceive(OnReceive onReceive) {
+        clientManager.addOnReceive(onReceive);
     }
 
     private void setIPv6() {

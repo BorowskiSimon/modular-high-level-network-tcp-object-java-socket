@@ -1,8 +1,8 @@
 package ClientInternals;
 
 import DataInternals.Answer;
-import DataInternals.Data;
-import DataInternals.DataHandler;
+import DataInternals.OnReceive;
+import DataInternals.OnReceiveHandler;
 import DataInternals.Request;
 import Utility.Helper;
 
@@ -21,7 +21,7 @@ public final class Client {
     public final int port;
     public final boolean IPv6;
     private volatile Answer answer;
-    private DataHandler dataHandler;
+    private OnReceiveHandler onReceiveHandler;
     private volatile boolean on = false;
     private volatile boolean handling = false;
     private volatile String name;
@@ -36,7 +36,7 @@ public final class Client {
             debug("start loop");
             while (on && socket.isConnected()) {
                 if (handling) {
-                    handle();
+                    onReceive();
                 } else {
                     read();
                 }
@@ -57,47 +57,47 @@ public final class Client {
 
         this.IPv6 = IPv6;
         setIPv6();
+
+        init();
+        if (!DEBUG) return;
+        debug(onReceiveHandler.toString());
     }
 
     public Client(String name, String serverIP, int port) {
         this(false, name, serverIP, port, false);
     }
 
-    public void setDataHandler(DataHandler dataHandler) {
-        this.dataHandler = dataHandler;
-        initDataHandler();
-        if (!DEBUG) return;
-        debug(dataHandler.toString());
+    public void addOnReceive(OnReceive onReceive) {
+        onReceiveHandler.add(onReceive);
     }
 
-    private void initDataHandler() {
-        dataHandler.addData(new Data("PingTask") {
+    private void init() {
+        onReceiveHandler.add(new OnReceive("PingTask") {
             @Override
-            public void handle(Object input) {
+            public void doUponReceipt(Object input) {
                 send(new Request(TAG, null));
             }
         });
-        dataHandler.addData(new Data("Ping") {
+        onReceiveHandler.add(new OnReceive("Ping") {
             @Override
-            public void handle(Object input) {
+            public void doUponReceipt(Object input) {
                 ping = System.currentTimeMillis() - timestamp;
                 debug("ping: " + ping + "ms");
                 System.out.println("ping: " + ping + "ms");
             }
         });
-        dataHandler.addData(new Data("Connect") {
+        onReceiveHandler.add(new OnReceive("Connect") {
             @Override
-            public void handle(Object input) {
+            public void doUponReceipt(Object input) {
                 id = (UUID) input;
                 Object[] objects = new Object[]{id, name};
                 send(new Request(TAG, objects));
                 debug("connected");
             }
         });
-        dataHandler.addData(new Data("Chat") {
+        onReceiveHandler.add(new OnReceive("Chat") {
             @Override
-            public void handle(Object input) {
-                //TODO make javadoc for overwriting ;). every predefined message (also shared) should be marked or something. maybe enumerated.
+            public void doUponReceipt(Object input) {
                 System.out.println(input);
             }
         });
@@ -161,8 +161,8 @@ public final class Client {
         }
     }
 
-    private void handle() {
-        dataHandler.handle(answer.TAG(), answer.answer());
+    private void onReceive() {
+        onReceiveHandler.onReceive(answer.TAG(), answer.answer());
         handling = false;
     }
 

@@ -1,9 +1,7 @@
 import ClientInternals.Client;
-import DataInternals.Data;
-import DataInternals.DataHandler;
+import DataInternals.OnReceive;
 import DataInternals.Request;
 
-import java.io.IOException;
 import java.util.Scanner;
 
 public final class RunnableClient {
@@ -22,18 +20,12 @@ public final class RunnableClient {
 
 
         Client client = new Client(false, name, ip, 25565, false);
-
-
-        DataHandler dataHandler = new DataHandler(false);
-        dataHandler.addData(new Data("Chat") {
+        client.addOnReceive(new OnReceive("Chat") {
             @Override
-            public void handle(Object input) {
+            public void doUponReceipt(Object input) {
                 System.out.println(input);
             }
         });
-
-
-        client.setDataHandler(dataHandler);
         client.start();
 
 

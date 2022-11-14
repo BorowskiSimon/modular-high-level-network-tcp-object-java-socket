@@ -2,26 +2,26 @@ package DataInternals;
 
 import java.util.HashMap;
 
-public final class DataHandler {
+public final class OnReceiveHandler {
     private boolean DEBUG = false;
-    private final HashMap<Object, Data> dataTypeHashMap = new HashMap<>();
+    private final HashMap<Object, OnReceive> dataTypeHashMap = new HashMap<>();
 
-    public DataHandler(boolean DEBUG) {
+    public OnReceiveHandler(boolean DEBUG) {
         setDEBUG(DEBUG);
     }
 
-    public DataHandler(DataHandler dataHandler) {
-        this(dataHandler.DEBUG);
-        dataTypeHashMap.putAll(dataHandler.dataTypeHashMap);
+    public OnReceiveHandler(OnReceiveHandler onReceiveHandler) {
+        this(onReceiveHandler.DEBUG);
+        dataTypeHashMap.putAll(onReceiveHandler.dataTypeHashMap);
     }
 
-    public void addData(Data data) {
-        if (dataTypeHashMap.containsKey(data.TAG)) {
-            debug("'" + data.TAG + "' already existed");
+    public void add(OnReceive onReceive) {
+        if (dataTypeHashMap.containsKey(onReceive.TAG)) {
+            debug("'" + onReceive.TAG + "' already existed");
             return;
         }
-        dataTypeHashMap.put(data.TAG, data);
-        debug("'" + data.TAG + "' was added");
+        dataTypeHashMap.put(onReceive.TAG, onReceive);
+        debug("'" + onReceive.TAG + "' was added");
     }
 
     public boolean contain(Object TAG) {
@@ -30,14 +30,14 @@ public final class DataHandler {
         return false;
     }
 
-    public void handle(Object TAG, Object input) {
+    public void onReceive(Object TAG, Object input) {
         if (!contain(TAG)) return;
         debug("handling '" + TAG + "'");
-        dataTypeHashMap.get(TAG).handle(input);
+        dataTypeHashMap.get(TAG).doUponReceipt(input);
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         dataTypeHashMap.forEach((key, value) -> stringBuilder.append("'").append(key).append("'").append(", "));
 
