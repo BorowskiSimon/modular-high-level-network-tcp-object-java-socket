@@ -14,18 +14,18 @@ import java.util.UUID;
 
 public final class Client {
     private boolean DEBUG = false;
-    private Socket socket;
-    private UUID id = null;
+    private Socket clientSocket;
+    private UUID clientID = null;
     public final String serverIP;
-    private String ip;
+    private String ipAddress;
     public final int port;
     public final boolean IPv6;
     private volatile Answer answer;
     private final OnReceiveHandler onReceiveHandler;
     private volatile boolean on = false;
     private volatile boolean handling = false;
-    private volatile String name;
-    private final String unchangedName;
+    private volatile String clientName;
+    private final String unchangedClientName;
     private int uniqueNameCounter = 2;
     private volatile long ping = 0;
     private volatile long timestamp;
@@ -36,7 +36,7 @@ public final class Client {
         @Override
         public void run() {
             debug("start loop");
-            while (on && socket.isConnected()) {
+            while (on && clientSocket.isConnected()) {
                 if (handling) {
                     onReceive();
                 } else {
@@ -47,11 +47,11 @@ public final class Client {
         }
     });
 
-    public Client(boolean DEBUG, String name, String serverIP, int port, boolean IPv6) {
+    public Client(boolean DEBUG, String clientName, String serverIP, int port, boolean IPv6) {
         setDEBUG(DEBUG);
 
-        this.unchangedName = name;
-        changeName(name);
+        this.unchangedClientName = clientName;
+        changeName(clientName);
 
         this.serverIP = serverIP;
         debug("server ip: " + serverIP);
@@ -67,8 +67,8 @@ public final class Client {
         debug(onReceiveHandler.toString());
     }
 
-    public Client(String name, String serverIP, int port) {
-        this(false, name, serverIP, port, false);
+    public Client(String clientName, String serverIP, int port) {
+        this(false, clientName, serverIP, port, false);
     }
 
     public void addOnReceive(OnReceive onReceive) {
@@ -121,23 +121,23 @@ public final class Client {
     }
 
     private void handleConnect(Object input) {
-        id = (UUID) input;
-        Object[] connectionData = new Object[]{id, name};
+        clientID = (UUID) input;
+        Object[] connectionData = new Object[]{clientID, clientName};
         send(new Request("Connect", connectionData));
     }
 
     private void handleUniqueName() {
-        changeName(unchangedName + "_" + uniqueNameCounter);
+        changeName(unchangedClientName + "_" + uniqueNameCounter);
         uniqueNameCounter++;
 
-        debug("changing name iteratively: " + name);
+        debug("changing name iteratively: " + clientName);
 
-        Object[] connectionData = new Object[]{id, name};
+        Object[] connectionData = new Object[]{clientID, clientName};
         send(new Request("Connect", connectionData));
     }
 
     private void changeName(String name) {
-        this.name = name;
+        this.clientName = name;
         send(new Request("ChangeName", name));
         print("name: " + name);
     }
@@ -148,13 +148,13 @@ public final class Client {
             debug("ip format: IPv" + (IPv6 ? "6" : "4"));
 
             if (IPv6) {
-                ip = String.valueOf(Helper.getPublicIPv6());
+                ipAddress = String.valueOf(Helper.getPublicIPv6());
             } else {
-                ip = String.valueOf(Helper.getPublicIPv4());
+                ipAddress = String.valueOf(Helper.getPublicIPv4());
             }
-            ip = ip.substring(1);
+            ipAddress = ipAddress.substring(1);
 
-            debug("ip: " + ip);
+            debug("ip: " + ipAddress);
         } catch (Exception e) {
             debug("public ip error", e);
         }
@@ -163,11 +163,11 @@ public final class Client {
     public void start() {
         on = true;
         try {
-            socket = new Socket(serverIP, port);
+            clientSocket = new Socket(serverIP, port);
             debug("socket created");
 
-            out = new ObjectOutputStream(socket.getOutputStream());
-            in = new ObjectInputStream(socket.getInputStream());
+            out = new ObjectOutputStream(clientSocket.getOutputStream());
+            in = new ObjectInputStream(clientSocket.getInputStream());
             debug("object stream created");
 
             thread.start();
@@ -200,7 +200,7 @@ public final class Client {
     }
 
     public void send(Request request) {
-        if (!on || !socket.isConnected() || request == null) return;
+        if (!on || !clientSocket.isConnected() || request == null) return;
         try {
             out.writeObject(request);
             out.flush();
@@ -211,9 +211,9 @@ public final class Client {
     }
 
     public void stop() {
-        if (socket != null) {
+        if (clientSocket != null) {
             print("active disconnect");
-            send(new Request("Disconnect", id));
+            send(new Request("Disconnect", clientID));
         }
         close();
     }
@@ -234,8 +234,8 @@ public final class Client {
                 out.close();
                 debug("output stream closed");
             }
-            if (socket != null) {
-                socket.close();
+            if (clientSocket != null) {
+                clientSocket.close();
                 debug("socket closed");
             }
         } catch (Exception e) {
@@ -253,16 +253,16 @@ public final class Client {
         return on;
     }
 
-    public UUID getId() {
-        return id;
+    public UUID getClientID() {
+        return clientID;
     }
 
-    public String getIp() {
-        return ip;
+    public String getIpAddress() {
+        return ipAddress;
     }
 
-    public String getName() {
-        return name;
+    public String getClientName() {
+        return clientName;
     }
 
 
@@ -274,7 +274,7 @@ public final class Client {
     }
 
     private void print(String toPrint) {
-        System.out.println("Client[" + id + "] >> " + toPrint + " <<");
+        System.out.println("Client[" + clientID + "] >> " + toPrint + " <<");
     }
 
     private void debug(String toPrint) {

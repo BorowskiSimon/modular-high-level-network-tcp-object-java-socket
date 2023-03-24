@@ -20,13 +20,13 @@ final class ClientManager {
     private boolean DEBUG = false;
     private final OnReceiveHandler onReceiveHandler;
     private volatile ClientThread newClientThread = null;
-    private final int max;
+    private final int maxConnections;
     private final Thread heartbeatThread = new Thread(this::heartbeat);
 
-    public ClientManager(boolean DEBUG, boolean OFFLINE, int max) {
+    public ClientManager(boolean DEBUG, boolean OFFLINE, int maxConnections) {
         setDEBUG(DEBUG);
         this.OFFLINE = OFFLINE;
-        this.max = max;
+        this.maxConnections = maxConnections;
 
         this.onReceiveHandler = new OnReceiveHandler(DEBUG);
         init();
@@ -56,23 +56,23 @@ final class ClientManager {
     }
 
     private void handleDisconnect(Object input) {
-        if (input instanceof UUID uuid) {
-            broadcast(new Answer("Chat", clientThreadHashMap.get(uuid).name + " disconnected."));
-            clientThreadHashMap.get(uuid).close();
-            clientThreadHashMap.remove(uuid);
-            print(uuid, "disconnected");
+        if (input instanceof UUID clientID) {
+            broadcast(new Answer("Chat", clientThreadHashMap.get(clientID).clientName + " disconnected."));
+            clientThreadHashMap.get(clientID).close();
+            clientThreadHashMap.remove(clientID);
+            print(clientID, "disconnected");
             printStatus();
         }
     }
 
     private void handleConnect(Object input) {
         if (input instanceof Object[] connectionData) {
-            if (connectionData[0] instanceof UUID id) {
-                String name = (String) connectionData[1];
+            if (connectionData[0] instanceof UUID clientID) {
+                String clientName = (String) connectionData[1];
 
                 boolean readyForReconnect = false;
-                if (clientThreadHashMap.containsKey(id)) {
-                    if (clientThreadHashMap.get(id).isWaiting()) {
+                if (clientThreadHashMap.containsKey(clientID)) {
+                    if (clientThreadHashMap.get(clientID).isWaiting()) {
                         readyForReconnect = true;
                     } else {
                         newClientThread.send(new Answer("Chat", "You have been removed. Illegal connect"));
@@ -89,25 +89,25 @@ final class ClientManager {
                     }
                 }
                 if (readyForReconnect) {
-                    clientThreadHashMap.get(id).close();
-                    clientThreadHashMap.remove(id);
-                    debug("removed old thread: " + id);
+                    clientThreadHashMap.get(clientID).close();
+                    clientThreadHashMap.remove(clientID);
+                    debug("removed old thread: " + clientID);
                 }
 
-                if(getConnectionAmount() > 0 && !hasUniqueClientName(name)){
-                    System.out.println(name);
+                if (getConnectionAmount() > 0 && !hasUniqueClientName(clientName)) {
+                    System.out.println(clientName);
 
                     newClientThread.send(new Answer("UniqueName", null));
                     debug("blocked. no unique name");
                     return;
                 }
 
-                newClientThread.name = name;
-                clientThreadHashMap.put(id, newClientThread);
+                newClientThread.clientName = clientName;
+                clientThreadHashMap.put(clientID, newClientThread);
                 newClientThread = null;
 
-                send(new Answer("ConnectSuccessful", null), id);
-                broadcast(new Answer("Chat", clientThreadHashMap.get(id).name + (readyForReconnect ? " reconnected. Welcome back!" : " connected. Welcome!")));
+                send(new Answer("ConnectSuccessful", null), clientID);
+                broadcast(new Answer("Chat", clientThreadHashMap.get(clientID).clientName + (readyForReconnect ? " reconnected. Welcome back!" : " connected. Welcome!")));
                 printStatus();
             }
         }
@@ -174,27 +174,27 @@ final class ClientManager {
         return ret.get();
     }
 
-    public void connectionCheck(Socket client) {
-        InetSocketAddress socketAddress = (InetSocketAddress) client.getRemoteSocketAddress();
+    public void connectionCheck(Socket serverSidedClientSocket) {
+        InetSocketAddress socketAddress = (InetSocketAddress) serverSidedClientSocket.getRemoteSocketAddress();
         String clientIP = socketAddress.getAddress().getHostAddress();
         debug("client ip: " + clientIP);
 
         if (!OFFLINE) {
-            creatingClient(client);
+            creatingClient(serverSidedClientSocket);
             return;
         }
         if (!clientIP.equals("127.0.0.1")) {
             debug("client blocked. this is a offline server");
             return;
         }
-        creatingClient(client);
+        creatingClient(serverSidedClientSocket);
     }
 
-    private void creatingClient(Socket client) {
+    private void creatingClient(Socket serverSidedClientSocket) {
         if (newClientThread != null) return;
-        newClientThread = new ClientThread(DEBUG, client, UUID.randomUUID(), new OnReceiveHandler(onReceiveHandler));
+        newClientThread = new ClientThread(DEBUG, serverSidedClientSocket, UUID.randomUUID(), new OnReceiveHandler(onReceiveHandler));
         newClientThread.start();
-        newClientThread.send(new Answer("Connect", newClientThread.id));
+        newClientThread.send(new Answer("Connect", newClientThread.clientID));
     }
 
     public ArrayList<UUID> getConnectedClientList() {
@@ -202,7 +202,7 @@ final class ClientManager {
     }
 
     public String getClientName(UUID clientID) {
-        return clientThreadHashMap.get(clientID).name;
+        return clientThreadHashMap.get(clientID).clientName;
     }
 
     public UUID getClientByName(String clientName) {
@@ -210,18 +210,18 @@ final class ClientManager {
             UUID clientID = entry.getKey();
             ClientThread clientThread = entry.getValue();
 
-            System.out.println(clientThread.name + " == " + clientName);
+            System.out.println(clientThread.clientName + " == " + clientName);
 
-            if (clientThread.name.equals(clientName)) {
+            if (clientThread.clientName.equals(clientName)) {
                 return clientID;
             }
         }
         return null;
     }
 
-    public void send(Answer answer, UUID id) {
-        if (!isClient(id)) return;
-        clientThreadHashMap.get(id).send(answer);
+    public void send(Answer answer, UUID clientID) {
+        if (!isClient(clientID)) return;
+        clientThreadHashMap.get(clientID).send(answer);
     }
 
     public void broadcast(Answer answer) {
@@ -238,8 +238,8 @@ final class ClientManager {
         debug("broadcast: " + answer);
     }
 
-    private boolean isClient(UUID client) {
-        return clientThreadHashMap.get(client) != null;
+    private boolean isClient(UUID clientID) {
+        return clientThreadHashMap.get(clientID) != null;
     }
 
     private boolean hasUniqueClientName(String clientName) {
@@ -267,18 +267,18 @@ final class ClientManager {
         }
     }
 
-    public void closeClient(UUID id) {
-        clientThreadHashMap.get(id).close();
+    public void closeClient(UUID clientID) {
+        clientThreadHashMap.get(clientID).close();
     }
 
-    public void removeClient(UUID id) {
-        closeClient(id);
-        clientThreadHashMap.remove(id);
+    public void removeClient(UUID clientID) {
+        closeClient(clientID);
+        clientThreadHashMap.remove(clientID);
     }
 
     private void printStatus() {
-        broadcast(new Answer("Chat", "Connected clients: " + getConnectionAmount() + " / " + max));
-        print("connected clients: " + getConnectionAmount() + " / " + max);
+        broadcast(new Answer("Chat", "Connected clients: " + getConnectionAmount() + " / " + maxConnections));
+        print("connected clients: " + getConnectionAmount() + " / " + maxConnections);
     }
 
 
@@ -294,8 +294,8 @@ final class ClientManager {
 
     }
 
-    private void print(UUID id, String toPrint) {
-        print("client[" + id + "] " + toPrint);
+    private void print(UUID clientID, String toPrint) {
+        print("client[" + clientID + "] " + toPrint);
     }
 
     private void debug(String toPrint) {
@@ -303,8 +303,8 @@ final class ClientManager {
         print(toPrint);
     }
 
-    private void debug(UUID id, String toPrint) {
-        debug("client[" + id + "] " + toPrint);
+    private void debug(UUID clientID, String toPrint) {
+        debug("client[" + clientID + "] " + toPrint);
     }
 
     private void debug(String toPrint, Exception e) {
