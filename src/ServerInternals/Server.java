@@ -69,7 +69,7 @@ public final class Server {
         }
 
         try {
-            ipAddress = initIP();
+            ipAddress = initIPAddress();
 
             print("ip: " + ipAddress);
             print("port: " + port);
@@ -78,7 +78,7 @@ public final class Server {
         }
     }
 
-    private String initIP() throws Exception {
+    private String initIPAddress() throws Exception {
         if (!OFFLINE) {
             if (IPv6) {
                 return Helper.getPublicIPv6().getHostAddress();
@@ -115,6 +115,8 @@ public final class Server {
                     Socket serverSidedClientSocket = serverSocket.accept();
                     if (!on) break;
                     print("client connecting");
+
+                    if (clientManager.getConnectionAmount() >= maxConnections) continue;
 
                     clientManager.connectionCheck(serverSidedClientSocket);
                 } catch (Exception e) {
