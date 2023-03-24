@@ -89,6 +89,10 @@ public final class Server {
         return String.valueOf(socket.getInetAddress().getHostAddress());
     }
 
+    public String getIpAddress(){
+        return ipAddress;
+    }
+
     public void start() {
         if (socket == null) {
             debug("socket still null. maybe server not online");
