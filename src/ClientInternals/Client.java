@@ -127,7 +127,7 @@ public final class Client {
     }
 
     private void handleUniqueName() {
-        name = unchangedName + "_" + uniqueNameCounter;
+        changeName(unchangedName + "_" + uniqueNameCounter);
         uniqueNameCounter++;
 
         debug("changing name iteratively: " + name);
