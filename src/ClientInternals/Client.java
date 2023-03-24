@@ -25,6 +25,8 @@ public final class Client {
     private volatile boolean on = false;
     private volatile boolean handling = false;
     private volatile String name;
+    private final String unchangedName;
+    private int uniqueNameCounter = 2;
     private volatile long ping = 0;
     private volatile long timestamp;
     private ObjectOutputStream out;
@@ -48,6 +50,7 @@ public final class Client {
     public Client(boolean DEBUG, String name, String serverIP, int port, boolean IPv6) {
         setDEBUG(DEBUG);
 
+        this.unchangedName = name;
         changeName(name);
 
         this.serverIP = serverIP;
@@ -76,23 +79,24 @@ public final class Client {
         onReceiveHandler.add(new OnReceive("PingTask") {
             @Override
             public void doUponReceipt(Object input) {
-                send(new Request(TAG, null));
+                send(new Request(tag, null));
             }
         });
         onReceiveHandler.add(new OnReceive("Ping") {
             @Override
             public void doUponReceipt(Object input) {
-                ping = System.currentTimeMillis() - timestamp;
-                debug("ping: " + ping + "ms");
-                System.out.println("ping: " + ping + "ms");
+                handlePing();
             }
         });
         onReceiveHandler.add(new OnReceive("Connect") {
             @Override
             public void doUponReceipt(Object input) {
-                id = (UUID) input;
-                Object[] objects = new Object[]{id, name};
-                send(new Request(TAG, objects));
+                handleConnect(input);
+            }
+        });
+        onReceiveHandler.add(new OnReceive("ConnectSuccessful") {
+            @Override
+            public void doUponReceipt(Object input) {
                 debug("connected");
             }
         });
@@ -102,6 +106,34 @@ public final class Client {
                 System.out.println(input);
             }
         });
+        onReceiveHandler.add(new OnReceive("UniqueName") {
+            @Override
+            public void doUponReceipt(Object input) {
+                handleUniqueName();
+            }
+        });
+    }
+
+    private void handlePing() {
+        ping = System.currentTimeMillis() - timestamp;
+        debug("ping: " + ping + "ms");
+        System.out.println("ping: " + ping + "ms");
+    }
+
+    private void handleConnect(Object input) {
+        id = (UUID) input;
+        Object[] connectionData = new Object[]{id, name};
+        send(new Request("Connect", connectionData));
+    }
+
+    private void handleUniqueName() {
+        changeName(unchangedName + "_" + uniqueNameCounter);
+        uniqueNameCounter++;
+
+        debug("changing name iteratively: " + name);
+
+        Object[] connectionData = new Object[]{id, name};
+        send(new Request("Connect", connectionData));
     }
 
     private void changeName(String name) {
@@ -163,7 +195,7 @@ public final class Client {
     }
 
     private void onReceive() {
-        onReceiveHandler.onReceive(answer.TAG(), answer.answer());
+        onReceiveHandler.onReceive(answer.tag(), answer.answer());
         handling = false;
     }
 
@@ -190,7 +222,7 @@ public final class Client {
         debug("disconnecting");
         on = false;
         try {
-            if(thread.isAlive()){
+            if (thread.isAlive()) {
                 thread.join();
                 debug("thread stopped");
             }

@@ -2,11 +2,11 @@ package ServerInternals;
 
 import DataInternals.Answer;
 import DataInternals.OnReceive;
-import DataInternals.OnReceiveHandler;
 import Utility.Helper;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.UUID;
 
 public final class Server {
@@ -89,6 +89,10 @@ public final class Server {
         return String.valueOf(socket.getInetAddress().getHostAddress());
     }
 
+    public String getIpAddress(){
+        return ipAddress;
+    }
+
     public void start() {
         if (socket == null) {
             debug("socket still null. maybe server not online");
@@ -127,6 +131,18 @@ public final class Server {
             }
         }
         debug("stopped connection loop");
+    }
+
+    public ArrayList<UUID> getConnectedClientList(){
+        return clientManager.getConnectedClientList();
+    }
+
+    public String getClientName(UUID clientID){
+        return clientManager.getClientName(clientID);
+    }
+
+    public UUID getClientByName(String clientName){
+        return clientManager.getClientByName(clientName);
     }
 
     public void send(Answer answer, UUID id) {

@@ -6,7 +6,9 @@ import DataInternals.OnReceiveHandler;
 
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,62 +38,86 @@ final class ClientManager {
         onReceiveHandler.add(new OnReceive("Disconnect") {
             @Override
             public void doUponReceipt(Object input) {
-                if (input instanceof UUID uuid) {
-                    broadcast(new Answer("Chat", clientThreadHashMap.get(uuid).name + " disconnected."));
-                    clientThreadHashMap.get(uuid).close();
-                    clientThreadHashMap.remove(uuid);
-                    print(uuid, "disconnected");
-                    printStatus();
-                }
+                handleDisconnect(input);
             }
         });
         onReceiveHandler.add(new OnReceive("Chat") {
             @Override
             public void doUponReceipt(Object input) {
-                broadcast(new Answer(TAG, input));
+                broadcast(new Answer(tag, input));
             }
         });
         onReceiveHandler.add(new OnReceive("Connect") {
             @Override
             public void doUponReceipt(Object input) {
-                if (input instanceof Object[] objects) {
-                    if (objects[0] instanceof UUID id) {
-                        String name = (String) objects[1];
-
-                        boolean readyForReconnect = false;
-                        if (clientThreadHashMap.containsKey(id)) {
-                            if (clientThreadHashMap.get(id).isWaiting()) {
-                                readyForReconnect = true;
-                            } else {
-                                send(new Answer("Chat", "You have been removed. Illegal connect"), id);
-                                debug("blocked. illegal try to reconnect");
-                                newClientThread = null;
-                                return;
-                            }
-                        }
-                        if (readyForReconnect) {
-                            clientThreadHashMap.get(id).close();
-                            clientThreadHashMap.remove(id);
-                            debug("removed old thread: " + id);
-                        }
-
-                        newClientThread.name = name;
-                        clientThreadHashMap.put(id, newClientThread);
-                        newClientThread = null;
-
-                        broadcast(new Answer("Chat", clientThreadHashMap.get(id).name + (readyForReconnect ? " reconnected. Welcome back!" : " connected. Welcome!")));
-                        printStatus();
-                    }
-                }
+                handleConnect(input);
             }
         });
     }
 
+    private void handleDisconnect(Object input) {
+        if (input instanceof UUID uuid) {
+            broadcast(new Answer("Chat", clientThreadHashMap.get(uuid).name + " disconnected."));
+            clientThreadHashMap.get(uuid).close();
+            clientThreadHashMap.remove(uuid);
+            print(uuid, "disconnected");
+            printStatus();
+        }
+    }
+
+    private void handleConnect(Object input) {
+        if (input instanceof Object[] connectionData) {
+            if (connectionData[0] instanceof UUID id) {
+                String name = (String) connectionData[1];
+
+                boolean readyForReconnect = false;
+                if (clientThreadHashMap.containsKey(id)) {
+                    if (clientThreadHashMap.get(id).isWaiting()) {
+                        readyForReconnect = true;
+                    } else {
+                        newClientThread.send(new Answer("Chat", "You have been removed. Illegal connect"));
+
+                        try {
+                            Thread.sleep(100);
+                        } catch (Exception e) {
+                            debug("wait error", e);
+                        }
+
+                        debug("blocked. illegal try to reconnect");
+                        newClientThread = null;
+                        return;
+                    }
+                }
+                if (readyForReconnect) {
+                    clientThreadHashMap.get(id).close();
+                    clientThreadHashMap.remove(id);
+                    debug("removed old thread: " + id);
+                }
+
+                if(getConnectionAmount() > 0 && !hasUniqueClientName(name)){
+                    System.out.println(name);
+
+                    newClientThread.send(new Answer("UniqueName", null));
+                    debug("blocked. no unique name");
+                    return;
+                }
+
+                newClientThread.name = name;
+                clientThreadHashMap.put(id, newClientThread);
+                newClientThread = null;
+
+                send(new Answer("ConnectSuccessful", null), id);
+                broadcast(new Answer("Chat", clientThreadHashMap.get(id).name + (readyForReconnect ? " reconnected. Welcome back!" : " connected. Welcome!")));
+                printStatus();
+            }
+        }
+    }
+
     public void addOnReceive(OnReceive onReceive) {
-        debug("adding " + onReceive.TAG + " for all new clients");
+        debug("adding " + onReceive.tag + " for all new clients");
         onReceiveHandler.add(onReceive);
-        clientThreadHashMap.forEach(((uuid, clientThread) -> {
-            debug(uuid, "adding " + onReceive.TAG);
+        clientThreadHashMap.forEach(((clientID, clientThread) -> {
+            debug(clientID, "adding " + onReceive.tag);
             clientThread.addOnReceive(onReceive);
         }));
     }
@@ -104,13 +130,13 @@ final class ClientManager {
         final int heartbeatDelay = 5000;
         while (on) {
             changedActivity.set(false);
-            clientThreadHashMap.forEach((key, value) -> {
-                if (!value.isWaiting() && !value.isConnected()) {
+            clientThreadHashMap.forEach((clientID, clientThread) -> {
+                if (!clientThread.isWaiting() && !clientThread.isConnected()) {
                     printCounter.set(0);
-                    print(key, "disconnected");
-                    debug("heartbeat: client[" + key + "] changed to waiting (for reconnect)");
+                    print(clientID, "disconnected");
+                    debug("heartbeat: client[" + clientID + "] changed to waiting (for reconnect)");
                     printStatus();
-                    value.setWaiting(true);
+                    clientThread.setWaiting(true);
                     changedActivity.set(true);
                 }
             });
@@ -135,11 +161,11 @@ final class ClientManager {
 
     public int getConnectionAmount() {
         AtomicInteger ret = new AtomicInteger(0);
-        clientThreadHashMap.forEach((key, value) -> {
-            if (value.isConnected()) {
+        clientThreadHashMap.forEach((clientID, clientThread) -> {
+            if (clientThread.isConnected()) {
                 ret.getAndIncrement();
             } else {
-                debug(key, "is not connected");
+                debug(clientID, "is not connected");
             }
         });
 
@@ -171,6 +197,28 @@ final class ClientManager {
         newClientThread.send(new Answer("Connect", newClientThread.id));
     }
 
+    public ArrayList<UUID> getConnectedClientList() {
+        return new ArrayList<>(clientThreadHashMap.keySet());
+    }
+
+    public String getClientName(UUID clientID) {
+        return clientThreadHashMap.get(clientID).name;
+    }
+
+    public UUID getClientByName(String clientName) {
+        for (Map.Entry<UUID, ClientThread> entry : clientThreadHashMap.entrySet()) {
+            UUID clientID = entry.getKey();
+            ClientThread clientThread = entry.getValue();
+
+            System.out.println(clientThread.name + " == " + clientName);
+
+            if (clientThread.name.equals(clientName)) {
+                return clientID;
+            }
+        }
+        return null;
+    }
+
     public void send(Answer answer, UUID id) {
         if (!isClient(id)) return;
         clientThreadHashMap.get(id).send(answer);
@@ -181,9 +229,9 @@ final class ClientManager {
         if (currentConnections == 0) return;
         print("broadcasting to " + currentConnections + " client" + (currentConnections > 1 ? "s " : " ") + answer);
 
-        clientThreadHashMap.forEach((key, value) -> {
-            if (value.isConnected()) {
-                value.send(answer);
+        clientThreadHashMap.forEach((clientID, clientThread) -> {
+            if (clientThread.isConnected()) {
+                clientThread.send(answer);
             }
         });
 
@@ -194,12 +242,16 @@ final class ClientManager {
         return clientThreadHashMap.get(client) != null;
     }
 
+    private boolean hasUniqueClientName(String clientName) {
+        return getClientByName(clientName) == null;
+    }
+
     public void closeConnections() {
         on = false;
         newClientThread = null;
 
         closeHeartbeat();
-        clientThreadHashMap.forEach((key, value) -> closeClient(key));
+        clientThreadHashMap.forEach((clientID, clientThread) -> closeClient(clientID));
 
         debug("all connection closed");
         printStatus();

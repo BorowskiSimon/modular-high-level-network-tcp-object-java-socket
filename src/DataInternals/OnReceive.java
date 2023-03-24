@@ -1,10 +1,10 @@
 package DataInternals;
 
 public abstract class OnReceive {
-    public final Object TAG;
+    public final Object tag;
 
-    public OnReceive(Object TAG) {
-        this.TAG = TAG;
+    public OnReceive(Object tag) {
+        this.tag = tag;
     }
 
     public abstract void doUponReceipt(Object input);
