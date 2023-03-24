@@ -14,8 +14,8 @@ import java.util.UUID;
 final class ClientThread {
     private boolean DEBUG = false;
     private boolean waiting = false;
-    private final Socket socket;
-    public final UUID id;
+    private final Socket serverSidedClientSocket;
+    public final UUID clientID;
     public volatile Request request;
 
     public final OnReceiveHandler onReceiveHandler;
@@ -23,7 +23,7 @@ final class ClientThread {
     private volatile boolean connected;
     private volatile boolean handling = false;
 
-    public volatile String name;
+    public volatile String clientName;
 
     public volatile long ping = 0;
     private volatile long timestamp;
@@ -34,7 +34,7 @@ final class ClientThread {
         @Override
         public void run() {
             debug("start loop");
-            while (connected && socket.isConnected()) {
+            while (connected && serverSidedClientSocket.isConnected()) {
                 if (handling) {
                     onReceive();
                 } else {
@@ -45,11 +45,11 @@ final class ClientThread {
         }
     });
 
-    public ClientThread(boolean DEBUG, Socket socket, UUID id, OnReceiveHandler onReceiveHandler) {
+    public ClientThread(boolean DEBUG, Socket serverSidedClientSocket, UUID clientID, OnReceiveHandler onReceiveHandler) {
         setDEBUG(DEBUG);
 
-        this.socket = socket;
-        this.id = id;
+        this.serverSidedClientSocket = serverSidedClientSocket;
+        this.clientID = clientID;
         this.onReceiveHandler = onReceiveHandler;
 
         init();
@@ -57,8 +57,8 @@ final class ClientThread {
         debug(onReceiveHandler.toString());
 
         try {
-            out = new ObjectOutputStream(socket.getOutputStream());
-            in = new ObjectInputStream(socket.getInputStream());
+            out = new ObjectOutputStream(serverSidedClientSocket.getOutputStream());
+            in = new ObjectInputStream(serverSidedClientSocket.getInputStream());
             debug("object stream created");
         } catch (Exception e) {
             close();
@@ -72,7 +72,7 @@ final class ClientThread {
         onReceiveHandler.add(new OnReceive("Ping") {
             @Override
             public void doUponReceipt(Object input) {
-                System.out.println("currently in: " + id + " (data handler: " + onReceiveHandler + ")");
+                System.out.println("currently in: " + clientID + " (data handler: " + onReceiveHandler + ")");
                 send(new Answer(tag, null));
             }
         });
@@ -86,7 +86,7 @@ final class ClientThread {
         onReceiveHandler.add(new OnReceive("ChangeName") {
             @Override
             public void doUponReceipt(Object input) {
-                name = (String) input;
+                clientName = (String) input;
             }
         });
     }
@@ -145,8 +145,8 @@ final class ClientThread {
                 out.close();
                 debug("output stream closed");
             }
-            if (socket != null) {
-                socket.close();
+            if (serverSidedClientSocket != null) {
+                serverSidedClientSocket.close();
                 debug("socket closed");
             }
         } catch (Exception e) {
@@ -180,7 +180,7 @@ final class ClientThread {
     }
 
     private void print(String toPrint) {
-        System.out.println("Client[" + id + "] >> " + toPrint + " <<");
+        System.out.println("Client[" + clientID + "] >> " + toPrint + " <<");
     }
 
     private void debug(String toPrint) {

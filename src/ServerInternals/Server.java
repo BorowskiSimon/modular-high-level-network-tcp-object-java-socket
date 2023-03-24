@@ -11,9 +11,9 @@ import java.util.UUID;
 
 public final class Server {
     private boolean DEBUG = false;
-    private ServerSocket socket = null;
+    private ServerSocket serverSocket = null;
     public final int port;
-    public final int max;
+    public final int maxConnections;
     public final int DELAY_IF_LIMIT_REACHED;
     public final boolean OFFLINE;
     public final boolean IPv6;
@@ -23,13 +23,13 @@ public final class Server {
 
     private final Thread connectionThread = new Thread(this::connectionLoop);
 
-    public Server(boolean DEBUG, int port, int max, boolean OFFLINE, boolean IPv6, int DELAY_IF_LIMIT_REACHED) {
+    public Server(boolean DEBUG, int port, int maxConnections, boolean OFFLINE, boolean IPv6, int DELAY_IF_LIMIT_REACHED) {
         setDEBUG(DEBUG);
 
         //FINALS
         this.port = port;
-        this.max = max;
-        debug("max connections: " + max);
+        this.maxConnections = maxConnections;
+        debug("max connections: " + maxConnections);
         this.OFFLINE = OFFLINE;
         debug("runs offline");
         this.DELAY_IF_LIMIT_REACHED = DELAY_IF_LIMIT_REACHED;
@@ -40,11 +40,11 @@ public final class Server {
 
         init();
 
-        clientManager = new ClientManager(DEBUG, OFFLINE, max);
+        clientManager = new ClientManager(DEBUG, OFFLINE, maxConnections);
     }
 
-    public Server(int port, int max) {
-        this(false, port, max, false, false, 1000);
+    public Server(int port, int maxConnections) {
+        this(false, port, maxConnections, false, false, 1000);
     }
 
     public void addOnReceive(OnReceive onReceive) {
@@ -62,7 +62,7 @@ public final class Server {
 
     private void init() {
         try {
-            socket = new ServerSocket(port);
+            serverSocket = new ServerSocket(port);
             debug("socket created");
         } catch (Exception e) {
             debug("socket init error", e);
@@ -86,15 +86,15 @@ public final class Server {
                 return Helper.getPublicIPv4().getHostAddress();
             }
         }
-        return String.valueOf(socket.getInetAddress().getHostAddress());
+        return String.valueOf(serverSocket.getInetAddress().getHostAddress());
     }
 
-    public String getIpAddress(){
+    public String getIpAddress() {
         return ipAddress;
     }
 
     public void start() {
-        if (socket == null) {
+        if (serverSocket == null) {
             debug("socket still null. maybe server not online");
             return;
         }
@@ -108,15 +108,15 @@ public final class Server {
 
     private void connectionLoop() {
         debug("starting connection loop");
-        while (on && !socket.isClosed()) {
-            if (clientManager.getConnectionAmount() < max) {
+        while (on && !serverSocket.isClosed()) {
+            if (clientManager.getConnectionAmount() < maxConnections) {
                 try {
                     debug("waiting for new client");
-                    Socket client = socket.accept();
+                    Socket serverSidedClientSocket = serverSocket.accept();
                     if (!on) break;
                     print("client connecting");
 
-                    clientManager.connectionCheck(client);
+                    clientManager.connectionCheck(serverSidedClientSocket);
                 } catch (Exception e) {
                     if (!on) break;
                     debug("client connection error", e);
@@ -133,25 +133,25 @@ public final class Server {
         debug("stopped connection loop");
     }
 
-    public ArrayList<UUID> getConnectedClientList(){
+    public ArrayList<UUID> getConnectedClientList() {
         return clientManager.getConnectedClientList();
     }
 
-    public String getClientName(UUID clientID){
+    public String getClientName(UUID clientID) {
         return clientManager.getClientName(clientID);
     }
 
-    public UUID getClientByName(String clientName){
+    public UUID getClientByName(String clientName) {
         return clientManager.getClientByName(clientName);
     }
 
     public void send(Answer answer, UUID id) {
-        if (!on || socket.isClosed() || answer == null) return;
+        if (!on || serverSocket.isClosed() || answer == null) return;
         clientManager.send(answer, id);
     }
 
     public void broadcast(Answer answer) {
-        if (!on || socket.isClosed() || answer == null) return;
+        if (!on || serverSocket.isClosed() || answer == null) return;
         clientManager.broadcast(answer);
     }
 
@@ -176,10 +176,10 @@ public final class Server {
     }
 
     private void closeSocket() {
-        if (socket.isClosed()) return;
-        if (socket == null) return;
+        if (serverSocket.isClosed()) return;
+        if (serverSocket == null) return;
         try {
-            socket.close();
+            serverSocket.close();
             debug("socket closed");
         } catch (Exception e) {
             debug("socket close error", e);
