@@ -176,6 +176,10 @@ final class ClientManager {
         return new ArrayList<>(clientThreadHashMap.keySet());
     }
 
+    public String getClientName(UUID clientID) {
+        return clientThreadHashMap.get(clientID).name;
+    }
+
     public void send(Answer answer, UUID id) {
         if (!isClient(id)) return;
         clientThreadHashMap.get(id).send(answer);

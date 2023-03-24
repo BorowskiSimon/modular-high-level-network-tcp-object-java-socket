@@ -2,6 +2,8 @@ import DataInternals.Answer;
 import DataInternals.OnReceive;
 import ServerInternals.Server;
 
+import java.util.UUID;
+
 public final class RunnableServer {
     public static void main(String[] args) {
         System.out.println("\n\nStart Runnable Server");
@@ -17,7 +19,20 @@ public final class RunnableServer {
         server.addOnReceive(new OnReceive("ListClients") {
             @Override
             public void doUponReceipt(Object input) {
-                server.broadcast(new Answer("Chat", server.getConnectedClientList()));
+                StringBuilder clientIDNameList = new StringBuilder();
+
+                for (UUID clientID : server.getConnectedClientList()) {
+                    clientIDNameList
+                            .append(server.getClientName(clientID))
+                            .append("[")
+                            .append(clientID)
+                            .append("]")
+                            .append(", ");
+                }
+                clientIDNameList.deleteCharAt(clientIDNameList.lastIndexOf(","));
+                clientIDNameList.deleteCharAt(clientIDNameList.lastIndexOf(" "));
+
+                server.broadcast(new Answer("Chat", clientIDNameList.toString()));
             }
         });
 

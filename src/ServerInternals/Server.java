@@ -138,6 +138,10 @@ public final class Server {
         return clientManager.getConnectedClientList();
     }
 
+    public String getClientName(UUID clientID){
+        return clientManager.getClientName(clientID);
+    }
+
     public void send(Answer answer, UUID id) {
         if (!on || socket.isClosed() || answer == null) return;
         clientManager.send(answer, id);
