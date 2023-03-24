@@ -160,18 +160,20 @@ final class ClientManager {
     }
 
     public int getConnectionAmount() {
-        AtomicInteger ret = new AtomicInteger(0);
-        clientThreadHashMap.forEach((clientID, clientThread) -> {
+        int ret = 0;
+        for (Map.Entry<UUID, ClientThread> entry : clientThreadHashMap.entrySet()) {
+            UUID clientID = entry.getKey();
+            ClientThread clientThread = entry.getValue();
             if (clientThread.isConnected()) {
-                ret.getAndIncrement();
+                ret++;
             } else {
                 debug(clientID, "is not connected");
             }
-        });
+        }
 
         debug("current clients: " + ret + " / " + clientThreadHashMap.size());
 
-        return ret.get();
+        return ret;
     }
 
     public void connectionCheck(Socket serverSidedClientSocket) {
