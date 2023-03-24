@@ -7,6 +7,7 @@ import Utility.Helper;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.UUID;
 
 public final class Server {
@@ -131,6 +132,10 @@ public final class Server {
             }
         }
         debug("stopped connection loop");
+    }
+
+    public ArrayList<UUID> getConnectedClientList(){
+        return clientManager.getConnectedClientList();
     }
 
     public void send(Answer answer, UUID id) {

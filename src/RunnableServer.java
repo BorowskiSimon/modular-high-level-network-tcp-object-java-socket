@@ -14,6 +14,12 @@ public final class RunnableServer {
                 server.broadcast(new Answer("Chat", input));
             }
         });
+        server.addOnReceive(new OnReceive("ListClients") {
+            @Override
+            public void doUponReceipt(Object input) {
+                server.broadcast(new Answer("Chat", server.getConnectedClientList()));
+            }
+        });
 
 
         System.out.println("Server IP: " + server.getIpAddress());

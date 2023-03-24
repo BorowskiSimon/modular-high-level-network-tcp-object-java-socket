@@ -6,6 +6,7 @@ import DataInternals.OnReceiveHandler;
 
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -169,6 +170,10 @@ final class ClientManager {
         newClientThread = new ClientThread(DEBUG, client, UUID.randomUUID(), new OnReceiveHandler(onReceiveHandler));
         newClientThread.start();
         newClientThread.send(new Answer("Connect", newClientThread.id));
+    }
+
+    public ArrayList<UUID> getConnectedClientList() {
+        return new ArrayList<>(clientThreadHashMap.keySet());
     }
 
     public void send(Answer answer, UUID id) {

@@ -37,6 +37,8 @@ public final class RunnableClient {
                 break;
             } else if (input.equals("ping")) {
                 client.ping();
+            } else if (input.equals("list")){
+                client.send(new Request("ListClients", null));
             } else {
                 client.send(new Request("Chat", client.getName() + ": " + input));
             }
