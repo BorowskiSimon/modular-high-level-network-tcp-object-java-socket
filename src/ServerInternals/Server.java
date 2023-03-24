@@ -142,6 +142,10 @@ public final class Server {
         return clientManager.getClientName(clientID);
     }
 
+    public UUID getClientByName(String clientName){
+        return clientManager.getClientByName(clientName);
+    }
+
     public void send(Answer answer, UUID id) {
         if (!on || socket.isClosed() || answer == null) return;
         clientManager.send(answer, id);

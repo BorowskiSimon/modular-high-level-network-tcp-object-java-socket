@@ -8,6 +8,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,13 +38,7 @@ final class ClientManager {
         onReceiveHandler.add(new OnReceive("Disconnect") {
             @Override
             public void doUponReceipt(Object input) {
-                if (input instanceof UUID uuid) {
-                    broadcast(new Answer("Chat", clientThreadHashMap.get(uuid).name + " disconnected."));
-                    clientThreadHashMap.get(uuid).close();
-                    clientThreadHashMap.remove(uuid);
-                    print(uuid, "disconnected");
-                    printStatus();
-                }
+                handleDisconnect(input);
             }
         });
         onReceiveHandler.add(new OnReceive("Chat") {
@@ -55,37 +50,67 @@ final class ClientManager {
         onReceiveHandler.add(new OnReceive("Connect") {
             @Override
             public void doUponReceipt(Object input) {
-                if (input instanceof Object[] objects) {
-                    if (objects[0] instanceof UUID id) {
-                        String name = (String) objects[1];
-
-                        boolean readyForReconnect = false;
-                        if (clientThreadHashMap.containsKey(id)) {
-                            if (clientThreadHashMap.get(id).isWaiting()) {
-                                readyForReconnect = true;
-                            } else {
-                                send(new Answer("Chat", "You have been removed. Illegal connect"), id);
-                                debug("blocked. illegal try to reconnect");
-                                newClientThread = null;
-                                return;
-                            }
-                        }
-                        if (readyForReconnect) {
-                            clientThreadHashMap.get(id).close();
-                            clientThreadHashMap.remove(id);
-                            debug("removed old thread: " + id);
-                        }
-
-                        newClientThread.name = name;
-                        clientThreadHashMap.put(id, newClientThread);
-                        newClientThread = null;
-
-                        broadcast(new Answer("Chat", clientThreadHashMap.get(id).name + (readyForReconnect ? " reconnected. Welcome back!" : " connected. Welcome!")));
-                        printStatus();
-                    }
-                }
+                handleConnect(input);
             }
         });
+    }
+
+    private void handleDisconnect(Object input) {
+        if (input instanceof UUID uuid) {
+            broadcast(new Answer("Chat", clientThreadHashMap.get(uuid).name + " disconnected."));
+            clientThreadHashMap.get(uuid).close();
+            clientThreadHashMap.remove(uuid);
+            print(uuid, "disconnected");
+            printStatus();
+        }
+    }
+
+    private void handleConnect(Object input) {
+        if (input instanceof Object[] objects) {
+            if (objects[0] instanceof UUID id) {
+                String name = (String) objects[1];
+
+                boolean readyForReconnect = false;
+                if (clientThreadHashMap.containsKey(id)) {
+                    if (clientThreadHashMap.get(id).isWaiting()) {
+                        readyForReconnect = true;
+                    } else {
+                        newClientThread.send(new Answer("Chat", "You have been removed. Illegal connect"));
+
+                        try {
+                            Thread.sleep(100);
+                        } catch (Exception e) {
+                            debug("wait error", e);
+                        }
+
+                        debug("blocked. illegal try to reconnect");
+                        newClientThread = null;
+                        return;
+                    }
+                }
+                if (readyForReconnect) {
+                    clientThreadHashMap.get(id).close();
+                    clientThreadHashMap.remove(id);
+                    debug("removed old thread: " + id);
+                }
+
+                if(getConnectionAmount() > 0 && !hasUniqueClientName(name)){
+                    System.out.println(name);
+
+                    newClientThread.send(new Answer("UniqueName", null));
+                    debug("blocked. no unique name");
+                    return;
+                }
+
+                newClientThread.name = name;
+                clientThreadHashMap.put(id, newClientThread);
+                newClientThread = null;
+
+                send(new Answer("ConnectSuccessful", null), id);
+                broadcast(new Answer("Chat", clientThreadHashMap.get(id).name + (readyForReconnect ? " reconnected. Welcome back!" : " connected. Welcome!")));
+                printStatus();
+            }
+        }
     }
 
     public void addOnReceive(OnReceive onReceive) {
@@ -180,6 +205,20 @@ final class ClientManager {
         return clientThreadHashMap.get(clientID).name;
     }
 
+    public UUID getClientByName(String clientName) {
+        for (Map.Entry<UUID, ClientThread> entry : clientThreadHashMap.entrySet()) {
+            UUID key = entry.getKey();
+            ClientThread value = entry.getValue();
+
+            System.out.println(value.name + " == " + clientName);
+
+            if (value.name.equals(clientName)) {
+                return key;
+            }
+        }
+        return null;
+    }
+
     public void send(Answer answer, UUID id) {
         if (!isClient(id)) return;
         clientThreadHashMap.get(id).send(answer);
@@ -201,6 +240,10 @@ final class ClientManager {
 
     private boolean isClient(UUID client) {
         return clientThreadHashMap.get(client) != null;
+    }
+
+    private boolean hasUniqueClientName(String clientName) {
+        return getClientByName(clientName) == null;
     }
 
     public void closeConnections() {

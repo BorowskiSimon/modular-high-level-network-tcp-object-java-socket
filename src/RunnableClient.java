@@ -19,7 +19,7 @@ public final class RunnableClient {
         System.out.println("\n\nStart Runnable Client");
 
 
-        Client client = new Client(false, name, ip, 25565, false);
+        Client client = new Client(true, name, ip, 25565, false);
         client.addOnReceive(new OnReceive("Chat") {
             @Override
             public void doUponReceipt(Object input) {

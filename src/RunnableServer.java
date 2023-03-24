@@ -9,7 +9,7 @@ public final class RunnableServer {
         System.out.println("\n\nStart Runnable Server");
 
 
-        Server server = new Server(false, 25565, 3, false, false, 1000);
+        Server server = new Server(true, 25565, 3, false, false, 1000);
         server.addOnReceive(new OnReceive("Chat") {
             @Override
             public void doUponReceipt(Object input) {

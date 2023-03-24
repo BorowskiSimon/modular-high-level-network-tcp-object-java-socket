@@ -25,6 +25,8 @@ public final class Client {
     private volatile boolean on = false;
     private volatile boolean handling = false;
     private volatile String name;
+    private String unchangedName;
+    private int uniqueNameCounter = 2;
     private volatile long ping = 0;
     private volatile long timestamp;
     private ObjectOutputStream out;
@@ -93,6 +95,11 @@ public final class Client {
                 id = (UUID) input;
                 Object[] objects = new Object[]{id, name};
                 send(new Request(TAG, objects));
+            }
+        });
+        onReceiveHandler.add(new OnReceive("ConnectSuccessful") {
+            @Override
+            public void doUponReceipt(Object input) {
                 debug("connected");
             }
         });
@@ -102,10 +109,27 @@ public final class Client {
                 System.out.println(input);
             }
         });
+        onReceiveHandler.add(new OnReceive("UniqueName") {
+            @Override
+            public void doUponReceipt(Object input) {
+                handleUniqueName();
+            }
+        });
+    }
+
+    private void handleUniqueName() {
+        name = unchangedName + "_" + uniqueNameCounter;
+        uniqueNameCounter++;
+
+        debug("changing name iteratively: " + name);
+
+        Object[] objects = new Object[]{id, name};
+        send(new Request("Connect", objects));
     }
 
     private void changeName(String name) {
         this.name = name;
+        unchangedName = name;
         send(new Request("ChangeName", name));
         print("name: " + name);
     }
@@ -190,7 +214,7 @@ public final class Client {
         debug("disconnecting");
         on = false;
         try {
-            if(thread.isAlive()){
+            if (thread.isAlive()) {
                 thread.join();
                 debug("thread stopped");
             }
