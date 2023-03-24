@@ -16,12 +16,12 @@ public final class OnReceiveHandler {
     }
 
     public void add(OnReceive onReceive) {
-        if (dataTypeHashMap.containsKey(onReceive.TAG)) {
-            debug("'" + onReceive.TAG + "' already existed");
+        if (dataTypeHashMap.containsKey(onReceive.tag)) {
+            debug("'" + onReceive.tag + "' already existed");
             return;
         }
-        dataTypeHashMap.put(onReceive.TAG, onReceive);
-        debug("'" + onReceive.TAG + "' was added");
+        dataTypeHashMap.put(onReceive.tag, onReceive);
+        debug("'" + onReceive.tag + "' was added");
     }
 
     public boolean contain(Object TAG) {

@@ -25,7 +25,7 @@ public final class Client {
     private volatile boolean on = false;
     private volatile boolean handling = false;
     private volatile String name;
-    private String unchangedName;
+    private final String unchangedName;
     private int uniqueNameCounter = 2;
     private volatile long ping = 0;
     private volatile long timestamp;
@@ -50,6 +50,7 @@ public final class Client {
     public Client(boolean DEBUG, String name, String serverIP, int port, boolean IPv6) {
         setDEBUG(DEBUG);
 
+        this.unchangedName = name;
         changeName(name);
 
         this.serverIP = serverIP;
@@ -78,23 +79,19 @@ public final class Client {
         onReceiveHandler.add(new OnReceive("PingTask") {
             @Override
             public void doUponReceipt(Object input) {
-                send(new Request(TAG, null));
+                send(new Request(tag, null));
             }
         });
         onReceiveHandler.add(new OnReceive("Ping") {
             @Override
             public void doUponReceipt(Object input) {
-                ping = System.currentTimeMillis() - timestamp;
-                debug("ping: " + ping + "ms");
-                System.out.println("ping: " + ping + "ms");
+                handlePing();
             }
         });
         onReceiveHandler.add(new OnReceive("Connect") {
             @Override
             public void doUponReceipt(Object input) {
-                id = (UUID) input;
-                Object[] objects = new Object[]{id, name};
-                send(new Request(TAG, objects));
+                handleConnect(input);
             }
         });
         onReceiveHandler.add(new OnReceive("ConnectSuccessful") {
@@ -117,19 +114,30 @@ public final class Client {
         });
     }
 
+    private void handlePing() {
+        ping = System.currentTimeMillis() - timestamp;
+        debug("ping: " + ping + "ms");
+        System.out.println("ping: " + ping + "ms");
+    }
+
+    private void handleConnect(Object input) {
+        id = (UUID) input;
+        Object[] connectionData = new Object[]{id, name};
+        send(new Request("Connect", connectionData));
+    }
+
     private void handleUniqueName() {
         name = unchangedName + "_" + uniqueNameCounter;
         uniqueNameCounter++;
 
         debug("changing name iteratively: " + name);
 
-        Object[] objects = new Object[]{id, name};
-        send(new Request("Connect", objects));
+        Object[] connectionData = new Object[]{id, name};
+        send(new Request("Connect", connectionData));
     }
 
     private void changeName(String name) {
         this.name = name;
-        unchangedName = name;
         send(new Request("ChangeName", name));
         print("name: " + name);
     }
@@ -187,7 +195,7 @@ public final class Client {
     }
 
     private void onReceive() {
-        onReceiveHandler.onReceive(answer.TAG(), answer.answer());
+        onReceiveHandler.onReceive(answer.tag(), answer.answer());
         handling = false;
     }
 

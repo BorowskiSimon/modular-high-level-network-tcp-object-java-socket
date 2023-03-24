@@ -44,7 +44,7 @@ final class ClientManager {
         onReceiveHandler.add(new OnReceive("Chat") {
             @Override
             public void doUponReceipt(Object input) {
-                broadcast(new Answer(TAG, input));
+                broadcast(new Answer(tag, input));
             }
         });
         onReceiveHandler.add(new OnReceive("Connect") {
@@ -66,9 +66,9 @@ final class ClientManager {
     }
 
     private void handleConnect(Object input) {
-        if (input instanceof Object[] objects) {
-            if (objects[0] instanceof UUID id) {
-                String name = (String) objects[1];
+        if (input instanceof Object[] connectionData) {
+            if (connectionData[0] instanceof UUID id) {
+                String name = (String) connectionData[1];
 
                 boolean readyForReconnect = false;
                 if (clientThreadHashMap.containsKey(id)) {
@@ -114,10 +114,10 @@ final class ClientManager {
     }
 
     public void addOnReceive(OnReceive onReceive) {
-        debug("adding " + onReceive.TAG + " for all new clients");
+        debug("adding " + onReceive.tag + " for all new clients");
         onReceiveHandler.add(onReceive);
-        clientThreadHashMap.forEach(((uuid, clientThread) -> {
-            debug(uuid, "adding " + onReceive.TAG);
+        clientThreadHashMap.forEach(((clientID, clientThread) -> {
+            debug(clientID, "adding " + onReceive.tag);
             clientThread.addOnReceive(onReceive);
         }));
     }
@@ -130,13 +130,13 @@ final class ClientManager {
         final int heartbeatDelay = 5000;
         while (on) {
             changedActivity.set(false);
-            clientThreadHashMap.forEach((key, value) -> {
-                if (!value.isWaiting() && !value.isConnected()) {
+            clientThreadHashMap.forEach((clientID, clientThread) -> {
+                if (!clientThread.isWaiting() && !clientThread.isConnected()) {
                     printCounter.set(0);
-                    print(key, "disconnected");
-                    debug("heartbeat: client[" + key + "] changed to waiting (for reconnect)");
+                    print(clientID, "disconnected");
+                    debug("heartbeat: client[" + clientID + "] changed to waiting (for reconnect)");
                     printStatus();
-                    value.setWaiting(true);
+                    clientThread.setWaiting(true);
                     changedActivity.set(true);
                 }
             });
@@ -161,11 +161,11 @@ final class ClientManager {
 
     public int getConnectionAmount() {
         AtomicInteger ret = new AtomicInteger(0);
-        clientThreadHashMap.forEach((key, value) -> {
-            if (value.isConnected()) {
+        clientThreadHashMap.forEach((clientID, clientThread) -> {
+            if (clientThread.isConnected()) {
                 ret.getAndIncrement();
             } else {
-                debug(key, "is not connected");
+                debug(clientID, "is not connected");
             }
         });
 
@@ -207,13 +207,13 @@ final class ClientManager {
 
     public UUID getClientByName(String clientName) {
         for (Map.Entry<UUID, ClientThread> entry : clientThreadHashMap.entrySet()) {
-            UUID key = entry.getKey();
-            ClientThread value = entry.getValue();
+            UUID clientID = entry.getKey();
+            ClientThread clientThread = entry.getValue();
 
-            System.out.println(value.name + " == " + clientName);
+            System.out.println(clientThread.name + " == " + clientName);
 
-            if (value.name.equals(clientName)) {
-                return key;
+            if (clientThread.name.equals(clientName)) {
+                return clientID;
             }
         }
         return null;
@@ -229,9 +229,9 @@ final class ClientManager {
         if (currentConnections == 0) return;
         print("broadcasting to " + currentConnections + " client" + (currentConnections > 1 ? "s " : " ") + answer);
 
-        clientThreadHashMap.forEach((key, value) -> {
-            if (value.isConnected()) {
-                value.send(answer);
+        clientThreadHashMap.forEach((clientID, clientThread) -> {
+            if (clientThread.isConnected()) {
+                clientThread.send(answer);
             }
         });
 
@@ -251,7 +251,7 @@ final class ClientManager {
         newClientThread = null;
 
         closeHeartbeat();
-        clientThreadHashMap.forEach((key, value) -> closeClient(key));
+        clientThreadHashMap.forEach((clientID, clientThread) -> closeClient(clientID));
 
         debug("all connection closed");
         printStatus();

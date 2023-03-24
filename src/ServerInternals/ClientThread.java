@@ -73,7 +73,7 @@ final class ClientThread {
             @Override
             public void doUponReceipt(Object input) {
                 System.out.println("currently in: " + id + " (data handler: " + onReceiveHandler + ")");
-                send(new Answer(TAG, null));
+                send(new Answer(tag, null));
             }
         });
         onReceiveHandler.add(new OnReceive("PingTask") {
@@ -129,7 +129,7 @@ final class ClientThread {
     }
 
     private void onReceive() {
-        onReceiveHandler.onReceive(request.TAG(), request.request());
+        onReceiveHandler.onReceive(request.tag(), request.request());
         handling = false;
     }
 
