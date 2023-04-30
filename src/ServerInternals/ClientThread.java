@@ -51,6 +51,7 @@ final class ClientThread {
         this.serverSidedClientSocket = serverSidedClientSocket;
         this.clientID = clientID;
         this.onReceiveHandler = onReceiveHandler;
+        this.onReceiveHandler.setClientID(clientID);
 
         init();
 

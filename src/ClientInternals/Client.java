@@ -122,6 +122,7 @@ public final class Client {
 
     private void handleConnect(Object input) {
         clientID = (UUID) input;
+        onReceiveHandler.setClientID(clientID);
         Object[] connectionData = new Object[]{clientID, clientName};
         send(new Request("Connect", connectionData));
     }
