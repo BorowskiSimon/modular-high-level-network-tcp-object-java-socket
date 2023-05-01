@@ -141,7 +141,7 @@ public final class Client {
         clientID = (UUID) input;
         onReceiveHandler.setClientID(clientID);
         Object[] connectionData = new Object[]{clientID, clientName};
-        send(new Request("Connect", connectionData));
+        forceSend(new Request("Connect", connectionData));
     }
 
     private void handleUniqueName() {
@@ -151,7 +151,7 @@ public final class Client {
         debug("changing name iteratively: " + clientName);
 
         Object[] connectionData = new Object[]{clientID, clientName};
-        send(new Request("Connect", connectionData));
+        forceSend(new Request("Connect", connectionData));
     }
 
     private void changeName(String name) {
@@ -217,13 +217,8 @@ public final class Client {
         handling = false;
     }
 
-    public void send(Request request) {
+    private void forceSend(Request request){
         if (!on || !clientSocket.isConnected() || request == null) return;
-
-        if (!connectSuccessful) {
-            requestBuffer.add(request);
-            return;
-        }
 
         try {
             out.writeObject(request);
@@ -232,6 +227,15 @@ public final class Client {
         } catch (Exception e) {
             debug("send error", e);
         }
+    }
+
+    public void send(Request request) {
+        if (!connectSuccessful) {
+            requestBuffer.add(request);
+            return;
+        }
+
+        forceSend(request);
     }
 
     public void stop() {
