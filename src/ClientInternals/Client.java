@@ -10,6 +10,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.UUID;
 
 public final class Client {
@@ -32,6 +33,10 @@ public final class Client {
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
+    private boolean connectSuccessful;
+    private final ArrayList<Request> requestBuffer = new ArrayList<>();
+    public static final int requestBufferDelay = 10;
+
     private final Thread thread = new Thread(new Runnable() {
         @Override
         public void run() {
@@ -49,6 +54,8 @@ public final class Client {
 
     public Client(boolean DEBUG, String clientName, String serverIP, int port, boolean IPv6) {
         setDEBUG(DEBUG);
+
+        connectSuccessful = false;
 
         this.unchangedClientName = clientName;
         changeName(clientName);
@@ -97,6 +104,16 @@ public final class Client {
         onReceiveHandler.add(new OnReceive("ConnectSuccessful") {
             @Override
             public void doUponReceipt(Object input) {
+                connectSuccessful = true;
+                requestBuffer.forEach(request -> {
+                    send(request);
+                    try {
+                        Thread.sleep(requestBufferDelay);
+                    } catch (InterruptedException e) {
+                        debug("waiting error", e);
+                    }
+                });
+                requestBuffer.clear();
                 debug("connected");
             }
         });
@@ -122,8 +139,9 @@ public final class Client {
 
     private void handleConnect(Object input) {
         clientID = (UUID) input;
+        onReceiveHandler.setClientID(clientID);
         Object[] connectionData = new Object[]{clientID, clientName};
-        send(new Request("Connect", connectionData));
+        forceSend(new Request("Connect", connectionData));
     }
 
     private void handleUniqueName() {
@@ -133,7 +151,7 @@ public final class Client {
         debug("changing name iteratively: " + clientName);
 
         Object[] connectionData = new Object[]{clientID, clientName};
-        send(new Request("Connect", connectionData));
+        forceSend(new Request("Connect", connectionData));
     }
 
     private void changeName(String name) {
@@ -199,8 +217,9 @@ public final class Client {
         handling = false;
     }
 
-    public void send(Request request) {
+    private void forceSend(Request request){
         if (!on || !clientSocket.isConnected() || request == null) return;
+
         try {
             out.writeObject(request);
             out.flush();
@@ -208,6 +227,15 @@ public final class Client {
         } catch (Exception e) {
             debug("send error", e);
         }
+    }
+
+    public void send(Request request) {
+        if (!connectSuccessful) {
+            requestBuffer.add(request);
+            return;
+        }
+
+        forceSend(request);
     }
 
     public void stop() {
@@ -221,6 +249,8 @@ public final class Client {
     public void close() {
         debug("disconnecting");
         on = false;
+        connectSuccessful = false;
+        requestBuffer.clear();
         try {
             if (thread.isAlive()) {
                 thread.join();

@@ -33,6 +33,8 @@ public final class RunnableServer {
                 clientIDNameList.deleteCharAt(clientIDNameList.lastIndexOf(" "));
 
                 server.broadcast(new Answer("Chat", clientIDNameList.toString()));
+
+                server.send(new Answer("Chat", "Your ID: is " + getClientID()), getClientID());
             }
         });
 

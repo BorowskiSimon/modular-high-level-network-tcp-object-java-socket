@@ -1,10 +1,13 @@
 package DataInternals;
 
 import java.util.HashMap;
+import java.util.UUID;
 
 public final class OnReceiveHandler {
     private boolean DEBUG = false;
     private final HashMap<Object, OnReceive> dataTypeHashMap = new HashMap<>();
+
+    private UUID clientID;
 
     public OnReceiveHandler(boolean DEBUG) {
         setDEBUG(DEBUG);
@@ -22,6 +25,8 @@ public final class OnReceiveHandler {
         }
         dataTypeHashMap.put(onReceive.tag, onReceive);
         debug("'" + onReceive.tag + "' was added");
+
+        updateClientID();
     }
 
     public boolean contain(Object TAG) {
@@ -34,6 +39,22 @@ public final class OnReceiveHandler {
         if (!contain(TAG)) return;
         debug("handling '" + TAG + "'");
         dataTypeHashMap.get(TAG).doUponReceipt(input);
+    }
+
+    private void updateClientID() {
+        dataTypeHashMap.forEach((key, value) -> {
+            value.setClientID(clientID);
+            debug("'" + clientID + "' was updated for " + "'" + key + "'");
+        });
+        debug("'" + clientID + "' was updated");
+    }
+
+    public void setClientID(UUID clientID) {
+        this.clientID = clientID;
+    }
+
+    public UUID getClientID() {
+        return clientID;
     }
 
     @Override
