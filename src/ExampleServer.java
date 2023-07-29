@@ -4,9 +4,9 @@ import ServerInternals.Server;
 
 import java.util.UUID;
 
-public final class RunnableServer {
+public final class ExampleServer {
     public static void main(String[] args) {
-        System.out.println("\n\nStart Runnable Server");
+        System.out.println("\n\nStart Example Server");
 
 
         Server server = new Server(false, 25565, 3, false, false, 1000);

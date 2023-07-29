@@ -4,7 +4,7 @@ import DataInternals.Request;
 
 import java.util.Scanner;
 
-public final class RunnableClient {
+public final class ExampleClient {
     public static void main(String[] args) {
         String serverIP = "localhost";
         String clientName = "Default Mum";
@@ -16,7 +16,7 @@ public final class RunnableClient {
         }
 
 
-        System.out.println("\n\nStart Runnable Client");
+        System.out.println("\n\nStart Example Client");
 
 
         Client client = new Client(false, clientName, serverIP, 25565, false);
@@ -31,16 +31,21 @@ public final class RunnableClient {
 
         Scanner scanner = new Scanner(System.in);
         String input;
+        label:
         while (client.isOn()) {
             input = scanner.nextLine();
-            if (input.equals("exit")) {
-                break;
-            } else if (input.equals("ping")) {
-                client.ping();
-            } else if (input.equals("list")) {
-                client.send(new Request("ListClients", null));
-            } else {
-                client.send(new Request("Chat", client.getClientName() + ": " + input));
+            switch (input) {
+                case "exit":
+                    break label;
+                case "ping":
+                    client.ping();
+                    break;
+                case "list":
+                    client.send(new Request("ListClients", null));
+                    break;
+                default:
+                    client.send(new Request("Chat", client.getClientName() + ": " + input));
+                    break;
             }
         }
 
