@@ -2,7 +2,7 @@ package ServerInternals;
 
 import DataInternals.Answer;
 import DataInternals.OnReceive;
-import Utility.Helper;
+import Utility.PublicIP;
 
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -81,9 +81,9 @@ public final class Server {
     private String initIPAddress() throws Exception {
         if (!OFFLINE) {
             if (IPv6) {
-                return Helper.getPublicIPv6().getHostAddress();
+                return PublicIP.getV6().getHostAddress();
             } else {
-                return Helper.getPublicIPv4().getHostAddress();
+                return PublicIP.getV4().getHostAddress();
             }
         }
         return String.valueOf(serverSocket.getInetAddress().getHostAddress());

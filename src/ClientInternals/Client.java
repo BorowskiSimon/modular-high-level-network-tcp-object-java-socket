@@ -4,14 +4,16 @@ import DataInternals.Answer;
 import DataInternals.OnReceive;
 import DataInternals.OnReceiveHandler;
 import DataInternals.Request;
-import Utility.Helper;
+import Utility.PublicIP;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public final class Client {
     private boolean DEBUG = false;
@@ -166,9 +168,9 @@ public final class Client {
             debug("ip format: IPv" + (IPv6 ? "6" : "4"));
 
             if (IPv6) {
-                ipAddress = String.valueOf(Helper.getPublicIPv6());
+                ipAddress = String.valueOf(PublicIP.getV6());
             } else {
-                ipAddress = String.valueOf(Helper.getPublicIPv4());
+                ipAddress = String.valueOf(PublicIP.getV4());
             }
             ipAddress = ipAddress.substring(1);
 
